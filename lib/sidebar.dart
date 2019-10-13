@@ -8,27 +8,33 @@ class SideBar extends StatelessWidget {
         // Important: Remove any padding from the ListView.
         padding: EdgeInsets.zero,
         children: <Widget>[
-          DrawerHeader(
-            child: Row(
-              children: <Widget>[
-                BackButton(),
-                Text('FluttAir v0.1'),
-              ],
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor
-            ),
+          Container(
+            height: MediaQuery.of(context).size.height * 0.1,
+            child: DrawerHeader(
+                child: Row(
+                  children: <Widget>[
+                    BackButton(),
+                    Text('FluttAir v0.1',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                decoration:
+                    BoxDecoration(color: Theme.of(context).primaryColor),
+                margin: EdgeInsets.zero,
+                padding: EdgeInsets.zero),
           ),
           ListTile(
             title: Text('Home'),
             onTap: () {
-              Navigator.of(context).pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/home', ModalRoute.withName('/')); // or (Route<dynamic> route) => false
             },
           ),
           ListTile(
             title: Text('Settings'),
             onTap: () {
-              Navigator.of(context).pushNamedAndRemoveUntil('/settings', (Route<dynamic> route) => false);
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/settings', ModalRoute.withName('/'));
             },
           ),
         ],

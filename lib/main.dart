@@ -12,14 +12,14 @@ main() async {
 class Fluttair extends StatelessWidget {
   Widget build(BuildContext context) {
     return DynamicTheme(
-        defaultBrightness: Brightness.dark,
+        defaultBrightness: Brightness.light,
         data: (brightness) => ThemeData(
               brightness: brightness,
-              dividerColor: Colors.black,
-              accentColor: Colors.lightBlue,
-              primaryColor: Colors.lightBlue,
-              primaryColorDark: Colors.blue,
-              hintColor: Colors.grey,
+              //dividerColor: Colors.black,
+              //accentColor: Colors.blueAccent,
+              //primaryColor: Colors.blue,
+              //primaryColorDark: Colors.indigo,
+              //hintColor: Colors.grey,
             ),
         themedWidgetBuilder: (context, theme) {
           return MaterialApp(
