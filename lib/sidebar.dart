@@ -24,10 +24,17 @@ class SideBar extends StatelessWidget {
                 padding: EdgeInsets.zero),
           ),
           ListTile(
-            title: Text('Home'),
+            title: Text('Flights'),
             onTap: () {
               Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/home', ModalRoute.withName('/')); // or (Route<dynamic> route) => false
+                  '/flights', ModalRoute.withName('/')); // or (Route<dynamic> route) => false
+            },
+          ),
+          ListTile(
+            title: Text('Airports'),
+            onTap: () {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/airports', ModalRoute.withName('/'));
             },
           ),
           ListTile(

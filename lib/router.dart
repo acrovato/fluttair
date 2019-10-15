@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'landing.dart';
 import 'home.dart';
+import 'flights.dart';
+import 'airports.dart';
 import 'settings.dart';
 
 Map<String, WidgetBuilder> myRoute = {
-  '/': (context) => LandingView(),
-  '/home': (context) => HomeView(),
+  '/': (context) => HomeView(),
+  '/flights': (context) => FlightsView(),
+  '/airports': (context) => AirportsView(),
   '/settings': (context) => SettingsView()
 };
