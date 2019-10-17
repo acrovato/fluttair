@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'sidebar.dart';
+import 'airport.dart';
 import 'fake_database.dart';
 
 class AirportsView extends StatefulWidget {
@@ -30,7 +31,9 @@ class AirportsViewState extends State<AirportsView> {
         tooltip: 'Add or remove from favorite',
         onPressed: () {
           setState(() {
-            database.airportsFav[i] ? database.airportsFav[i] = false : database.airportsFav[i] = true;
+            database.airportsFav[i]
+                ? database.airportsFav[i] = false
+                : database.airportsFav[i] = true;
           });
         },
       ),
@@ -38,9 +41,10 @@ class AirportsViewState extends State<AirportsView> {
       subtitle: Text(database.airportICAO[i]),
       trailing: IconButton(
         icon: Icon(
-          database.airportsToDate[i] ? null : Icons.refresh,
-          color: Theme.of(context).accentColor,
-        ),
+            database.airportsToDate[i] ? Icons.check : Icons.refresh,
+            color: database.airportsToDate[i]
+                ? Colors.green
+                : Theme.of(context).accentColor),
         tooltip: 'Update airport data',
         onPressed: () {
           setState(() {
@@ -49,7 +53,7 @@ class AirportsViewState extends State<AirportsView> {
         },
       ),
       onTap: () {
-        /*open airport*/
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AirportView(name: database.airportNames[i], icao:database.airportICAO[i])));
       },
     );
   }

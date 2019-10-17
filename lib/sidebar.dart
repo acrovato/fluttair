@@ -9,40 +9,43 @@ class SideBar extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           Container(
-            height: MediaQuery.of(context).size.height * 0.1,
+            height: MediaQuery.of(context).size.height * 0.12,
             child: DrawerHeader(
                 child: Row(
                   children: <Widget>[
                     BackButton(),
-                    Text('FluttAir v0.1',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('FluttAir',
+                        style: TextStyle(
+                            color: Theme.of(context).accentColor,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
-                decoration:
-                    BoxDecoration(color: Theme.of(context).primaryColor),
                 margin: EdgeInsets.zero,
                 padding: EdgeInsets.zero),
           ),
+          //Divider(thickness: 1.5),
           ListTile(
             title: Text('Flights'),
             onTap: () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/flights', ModalRoute.withName('/')); // or (Route<dynamic> route) => false
+              Navigator.pushReplacementNamed(context, '/flights');
             },
           ),
           ListTile(
             title: Text('Airports'),
             onTap: () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/airports', ModalRoute.withName('/'));
+              Navigator.pushReplacementNamed(context, '/airports');
             },
           ),
           ListTile(
             title: Text('Settings'),
             onTap: () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/settings', ModalRoute.withName('/'));
+              Navigator.pushReplacementNamed(context, '/settings');
             },
+          ),
+          Divider(),
+          ListTile(
+            title: Text('v0.1')
           ),
         ],
       ),
