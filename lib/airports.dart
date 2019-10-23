@@ -10,50 +10,85 @@ class AirportsView extends StatefulWidget {
 }
 
 class AirportsViewState extends State<AirportsView> {
+  TextEditingController editingController = TextEditingController();
   final database = Database();
 
-  Widget _buildList() {
+  Widget _buildLists() {
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        itemCount: Database().tempSize,
+        shrinkWrap: true,
+        itemCount: database.aptcati.length,
         itemBuilder: (context, i) {
-          return _buildRow(i);
+          return _buildList(i);
         });
   }
 
-  Widget _buildRow(int i) {
+  Widget _buildList(int i) {
+    return ListTile(
+        title: Text(database.aptcati[i],
+            style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).accentColor)),
+        subtitle: ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            shrinkWrap: true,
+            itemCount: database.aptcats[database.aptcati[i]].length,
+            itemBuilder: (context, j) {
+              return _buildRow(i, j);
+            }));
+  }
+
+  Widget _buildRow(int i, int j) {
     return ListTile(
       leading: IconButton(
         icon: Icon(
-          database.airportsFav[i] ? Icons.favorite : Icons.favorite_border,
-          color: database.airportsFav[i] ? Theme.of(context).accentColor : null,
+          database.isFav[database.aptcats[database.aptcati[i]][j]]
+              ? Icons.favorite
+              : Icons.favorite_border,
+          color: database.isFav[database.aptcats[database.aptcati[i]][j]]
+              ? Theme.of(context).accentColor
+              : null,
         ),
         tooltip: 'Add or remove from favorite',
         onPressed: () {
           setState(() {
-            database.airportsFav[i]
-                ? database.airportsFav[i] = false
-                : database.airportsFav[i] = true;
+            if (database.isFav[database.aptcats[database.aptcati[i]][j]]) {
+              database.isFav[database.aptcats[database.aptcati[i]][j]] = false;
+              database.aptcats['Favorites']
+                  .remove(database.aptcats[database.aptcati[i]][j]);
+            } else {
+              database.isFav[database.aptcats[database.aptcati[i]][j]] = true;
+              database.aptcats['Favorites']
+                  .add(database.aptcats[database.aptcati[i]][j]);
+            }
           });
         },
       ),
-      title: Text(database.airportNames[i]),
-      subtitle: Text(database.airportICAO[i]),
+      title: Text(
+          database.airports[database.aptcats[database.aptcati[i]][j]].icao),
+      subtitle: Text(
+          database.airports[database.aptcats[database.aptcati[i]][j]].name),
       trailing: IconButton(
         icon: Icon(
-            database.airportsToDate[i] ? Icons.check : Icons.refresh,
-            color: database.airportsToDate[i]
+            database.isDate[database.aptcats[database.aptcati[i]][j]]
+                ? Icons.check
+                : Icons.refresh,
+            color: database.isDate[database.aptcats[database.aptcati[i]][j]]
                 ? Colors.green
                 : Theme.of(context).accentColor),
         tooltip: 'Update airport data',
         onPressed: () {
           setState(() {
-            database.airportsToDate[i] = true;
+            database.isDate[database.aptcats[database.aptcati[i]][j]] = true;
           });
         },
       ),
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AirportView(name: database.airportNames[i], icao:database.airportICAO[i])));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => AirportView(
+                    airport: database
+                        .airports[database.aptcats[database.aptcati[i]][j]])));
       },
     );
   }
@@ -66,7 +101,26 @@ class AirportsViewState extends State<AirportsView> {
       appBar: AppBar(
         title: Text('Airports'),
       ),
-      body: _buildList(),
+      body: Column(
+        children: <Widget>[
+          // TODO https://blog.usejournal.com/flutter-search-in-listview-1ffa40956685
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              onChanged: (value) {},
+              controller: editingController,
+              decoration: InputDecoration(
+                  labelText: "Search",
+                  hintText: "Search",
+                  suffixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(25.0)))),
+            ),
+          ),
+          Expanded(child: _buildLists())
+        ],
+      ),
     );
+    //);
   }
 }

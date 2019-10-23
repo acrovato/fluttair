@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'fake_database.dart';
 
 class AirportView extends StatefulWidget {
-  final name;
-  final icao;
+  final Airport airport;
 
-  AirportView({Key key, @required this.name, @required this.icao})
-      : super(key: key);
+  AirportView({Key key, @required this.airport}) : super(key: key);
 
   @override
   AirportViewState createState() => AirportViewState();
@@ -19,7 +18,7 @@ class AirportViewState extends State<AirportView> {
       child: Scaffold(
         appBar: AppBar(
           leading: BackButton(),
-          title: Text(widget.icao),
+          title: Text(widget.airport.icao),
           bottom: TabBar(
             tabs: [
               Tab(text: 'Airport'),
@@ -30,7 +29,7 @@ class AirportViewState extends State<AirportView> {
         ),
         body: TabBarView(
           children: [
-            _DataCard(name: widget.name, icao: widget.icao),
+            _DataCard(airport: widget.airport),
             _WxCard(),
             _NotamCard(),
           ],
@@ -41,11 +40,9 @@ class AirportViewState extends State<AirportView> {
 }
 
 class _DataCard extends StatefulWidget {
-  final name;
-  final icao;
+  final Airport airport;
 
-  _DataCard({Key key, @required this.name, @required this.icao})
-      : super(key: key);
+  _DataCard({Key key, @required this.airport}) : super(key: key);
 
   @override
   _DataCardState createState() => _DataCardState();
@@ -63,14 +60,14 @@ class _DataCardState extends State<_DataCard> {
               subtitle: Table(
                 children: [
                   TableRow(children: [
-                    Text('EBLG'),
-                    Text('LGG'),
-                    Text('Liège Airport')
+                    Text(widget.airport.icao),
+                    Text(widget.airport.iata),
+                    Text(widget.airport.name)
                   ]),
                   TableRow(children: [
-                    Text('503811N'),
-                    Text('0052634E'),
-                    Text('659 ft')
+                    Text('${widget.airport.lat}N'),
+                    Text('${widget.airport.lng}E'),
+                    Text('${widget.airport.elv} ft')
                   ])
                 ],
               )),
@@ -85,15 +82,15 @@ class _DataCardState extends State<_DataCard> {
                     Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(Icons.brightness_7)),
-                    Text('0616Z'),
-                    Text('0816L')
+                    Text('${widget.airport.srsez}Z'),
+                    Text('${widget.airport.srsel}L')
                   ]),
                   TableRow(children: [
                     Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(Icons.brightness_5)),
-                    Text('1629Z'),
-                    Text('1829L')
+                    Text('${widget.airport.ssetz}Z'),
+                    Text('${widget.airport.ssetl}L')
                   ])
                 ],
               )),
@@ -105,12 +102,12 @@ class _DataCardState extends State<_DataCard> {
               subtitle: ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: 4,
+                  itemCount: widget.airport.rwysi.length,
                   itemBuilder: (context, i) {
                     return Row(children: <Widget>[
-                      Expanded(child: Text('04R')),
-                      Expanded(child: Text('12106 ft')),
-                      Expanded(child: Text('ASPH'))
+                      Expanded(child: Text(widget.airport.rwysi[i])),
+                      Expanded(child: Text('${widget.airport.rwysd[i]} ft')),
+                      Expanded(child: Text(widget.airport.rwyst[i]))
                     ]);
                   })),
         ),
@@ -121,22 +118,18 @@ class _DataCardState extends State<_DataCard> {
               subtitle: ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: 15,
+                  itemCount: widget.airport.frqi.length,
                   itemBuilder: (context, i) {
                     return Row(children: <Widget>[
-                      Expanded(child: Text('TWR')),
-                      Expanded(child: Text('118.130')),
-                      Expanded(child: Text('Liege Tower'))
+                      Expanded(child: Text(widget.airport.frqi[i])),
+                      Expanded(child: Text(widget.airport.frqf[i])),
+                      Expanded(child: Text(widget.airport.frqc[i]))
                     ]);
                   })),
         ),
         Card(
             child: ListTile(
-          title: Text('Contact', style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text('Liège Airport\n'
-              'Rue de l’Aéroport, 4460 Grâce-Hollogne\n'
-              'Belgium\n'
-              '+32 4 234 84 11'),
+          title: Text(widget.airport.ctc),
         )),
       ],
     );
