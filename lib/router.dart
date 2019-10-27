@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'home.dart';
-import 'flights.dart';
-import 'airports.dart';
-import 'settings.dart';
+import 'package:fluttair/views/home.dart';
+import 'package:fluttair/views/flights.dart';
+import 'package:fluttair/views/airports.dart';
+import 'package:fluttair/views/settings.dart';
 
 Map<String, WidgetBuilder> myRoute = {
   '/': (context) => HomeView(),

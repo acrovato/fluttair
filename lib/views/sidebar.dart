@@ -34,13 +34,15 @@ class SideBar extends StatelessWidget {
           ListTile(
             title: Text('Airports'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/airports');
+              Navigator.pop(context);
+              ModalRoute.of(context).isFirst ? Navigator.pushNamed(context, '/airports') : Navigator.pushReplacementNamed(context, '/airports');
             },
           ),
           ListTile(
             title: Text('Settings'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/settings');
+              Navigator.pop(context);
+              ModalRoute.of(context).isFirst ? Navigator.pushNamed(context, '/settings') : Navigator.pushReplacementNamed(context, '/settings');
             },
           ),
           Divider(),

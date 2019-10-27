@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'fake_database.dart';
+import 'package:fluttair/fake_database.dart';
 
 class AirportView extends StatefulWidget {
   final Airport airport;
@@ -129,7 +129,9 @@ class _DataCardState extends State<_DataCard> {
         ),
         Card(
             child: ListTile(
-          title: Text(widget.airport.ctc),
+          title: Text('Contact',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(widget.airport.ctc),
         )),
       ],
     );
@@ -144,24 +146,27 @@ class _WxCard extends StatefulWidget {
 class _WxCardState extends State<_WxCard> {
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: <Widget>[
-        Card(
-            child: ListTile(
-          title: Text('METAR'),
-          subtitle: Text(
-              'ICAO 999999Z 00000KT 9999 -SHRA FEW040 SCT060 BKN080 OVC010 15/5 Q1013 TEMPO 7500 TSRA'),
-          trailing: Text(
-            'VFR',
-            style: TextStyle(color: Colors.green),
-          ),
-        )),
-        Card(
-            child: ListTile(
-                title: Text('TAF'),
-                subtitle: Text(
-                    'ICAO 999999Z 9999/9999 00000KT 9999 -SHRA FEW040 SCT060 TEMPO 9999/9999 99999G99KT 7500 TSRA PROB30 9999/9999 SN')))
-      ],
+    return RefreshIndicator(
+      child: ListView(
+        children: <Widget>[
+          Card(
+              child: ListTile(
+            title: Text('METAR'),
+            subtitle: Text(
+                'ICAO 999999Z 00000KT 9999 -SHRA FEW040 SCT060 BKN080 OVC010 15/5 Q1013 TEMPO 7500 TSRA'),
+            trailing: Text(
+              'VFR',
+              style: TextStyle(color: Colors.green),
+            ),
+          )),
+          Card(
+              child: ListTile(
+                  title: Text('TAF'),
+                  subtitle: Text(
+                      'ICAO 999999Z 9999/9999 00000KT 9999 -SHRA FEW040 SCT060 TEMPO 9999/9999 99999G99KT 7500 TSRA PROB30 9999/9999 SN')))
+        ],
+      ),
+      onRefresh: _refreshTmp,
     );
   }
 }
@@ -174,15 +179,21 @@ class _NotamCard extends StatefulWidget {
 class _NotamCardState extends State<_NotamCard> {
   @override
   Widget build(BuildContext context) {
-    return ListView(children: <Widget>[
-      Card(
-          child: ListTile(
-              title: Text('A1234/06 NOTAMR A1212/06\n'
-                  'Q)ICAO/QMXLC/IV/NBO/A/000/999/5129N00028W005\n'
-                  'A)EGLL\n'
-                  'B)0609050500\n'
-                  'C)0704300500\n'
-                  'E)DUE WIP TWY B SOUTH CLSD BTN F AND R. TWY R CLSD BTN A AND B AND DIVERTED VIA NEW GREEN CL AND BLUE EDGE LGT. CTN ADZ')))
-    ]);
+    return RefreshIndicator(
+        child: ListView(children: <Widget>[
+          Card(
+              child: ListTile(
+                  title: Text('A1234/06 NOTAMR A1212/06\n'
+                      'Q)ICAO/QMXLC/IV/NBO/A/000/999/5129N00028W005\n'
+                      'A)EGLL\n'
+                      'B)0609050500\n'
+                      'C)0704300500\n'
+                      'E)DUE WIP TWY B SOUTH CLSD BTN F AND R. TWY R CLSD BTN A AND B AND DIVERTED VIA NEW GREEN CL AND BLUE EDGE LGT. CTN ADZ')))
+        ]),
+        onRefresh: _refreshTmp);
   }
+}
+
+Future<Null> _refreshTmp() async {
+  print('refreshing...');
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'sidebar.dart';
 import 'airport.dart';
-import 'fake_database.dart';
+import 'package:fluttair/fake_database.dart';
 
 class AirportsView extends StatefulWidget {
   @override
@@ -14,22 +14,23 @@ class AirportsViewState extends State<AirportsView> {
   final database = Database();
 
   Widget _buildLists() {
-    return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        shrinkWrap: true,
-        itemCount: database.aptcati.length,
-        itemBuilder: (context, i) {
-          return _buildList(i);
-        });
+    return Scrollbar(
+        child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: database.aptcati.length,
+            itemBuilder: (context, i) {
+              return _buildList(i);
+            }));
   }
 
   Widget _buildList(int i) {
     return ListTile(
         title: Text(database.aptcati[i],
-            style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).accentColor)),
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).accentColor)),
         subtitle: ListView.builder(
             physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
             shrinkWrap: true,
             itemCount: database.aptcats[database.aptcati[i]].length,
             itemBuilder: (context, j) {
@@ -40,6 +41,7 @@ class AirportsViewState extends State<AirportsView> {
   Widget _buildRow(int i, int j) {
     return ListTile(
       leading: IconButton(
+        alignment: Alignment.centerLeft,
         icon: Icon(
           database.isFav[database.aptcats[database.aptcati[i]][j]]
               ? Icons.favorite
@@ -68,6 +70,7 @@ class AirportsViewState extends State<AirportsView> {
       subtitle: Text(
           database.airports[database.aptcats[database.aptcati[i]][j]].name),
       trailing: IconButton(
+        alignment: Alignment.centerRight,
         icon: Icon(
             database.isDate[database.aptcats[database.aptcati[i]][j]]
                 ? Icons.check
