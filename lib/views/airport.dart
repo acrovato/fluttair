@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:fluttair/fake_database.dart';
+
+import 'package:fluttair/model/database.dart';
+import 'package:fluttair/model/airport.dart';
+import 'package:fluttair/model/runway.dart';
+import 'package:fluttair/model/frequency.dart';
 
 class AirportView extends StatefulWidget {
   final Airport airport;
@@ -29,9 +33,9 @@ class AirportViewState extends State<AirportView> {
         ),
         body: TabBarView(
           children: [
-            _DataCard(airport: widget.airport),
-            _WxCard(),
-            _NotamCard(),
+            _DataTab(airport: widget.airport),
+            _WxTab(),
+            _NotamTab(),
           ],
         ),
       ),
@@ -39,39 +43,67 @@ class AirportViewState extends State<AirportView> {
   }
 }
 
-class _DataCard extends StatefulWidget {
+class _DataTab extends StatefulWidget {
   final Airport airport;
 
-  _DataCard({Key key, @required this.airport}) : super(key: key);
+  _DataTab({Key key, @required this.airport}) : super(key: key);
 
   @override
-  _DataCardState createState() => _DataCardState();
+  _DataTabState createState() => _DataTabState();
 }
 
-class _DataCardState extends State<_DataCard> {
+class _DataTabState extends State<_DataTab> {
+  final dbProvider = DatabaseProvider();
+  static Future<List<Runway>> runways;
+  static Future<List<Frequency>> frequencies;
+
+  @override
+  void initState() {
+    runways = dbProvider.getRunways(widget.airport);
+    frequencies = dbProvider.getFrequencies(widget.airport);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       children: <Widget>[
         Card(
-          child: ListTile(
-              title:
-                  Text('Info', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Table(
-                children: [
-                  TableRow(children: [
-                    Text(widget.airport.icao),
-                    Text(widget.airport.iata),
-                    Text(widget.airport.name)
-                  ]),
-                  TableRow(children: [
-                    Text('${widget.airport.lat}N'),
-                    Text('${widget.airport.lng}E'),
-                    Text('${widget.airport.elv} ft')
-                  ])
-                ],
-              )),
-        ),
+            child: ListTile(
+                title:
+                    Text('Info', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Column(children: <Widget>[
+                  Align(
+                      child: Text(widget.airport.name,
+                          style:
+                              TextStyle(color: Theme.of(context).accentColor)),
+                      alignment: Alignment.centerLeft),
+                  Align(
+                      child: Text(widget.airport.icao),
+                      alignment: Alignment.centerLeft),
+                  Align(
+                      child: Text(widget.airport.country),
+                      alignment: Alignment.centerLeft),
+                  Align(
+                      child: Text(widget.airport.type),
+                      alignment: Alignment.centerLeft)
+                ]))),
+        Card(
+            child: ListTile(
+                title: Text('Location',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Column(children: <Widget>[
+                  Align(
+                      child: Text('${widget.airport.latitude}'),
+                      alignment: Alignment.centerLeft),
+                  Align(
+                      child: Text('${widget.airport.longitude}'),
+                      alignment: Alignment.centerLeft),
+                  Align(
+                      child: Text(
+                          '${widget.airport.elevation} ${widget.airport.elevationUnit}'),
+                      alignment: Alignment.centerLeft)
+                ]))),
         Card(
           child: ListTile(
               title: Text('Timezone',
@@ -82,68 +114,97 @@ class _DataCardState extends State<_DataCard> {
                     Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(Icons.brightness_7)),
-                    Text('${widget.airport.srsez}Z'),
-                    Text('${widget.airport.srsel}L')
+                    Text('0600Z'),
+                    Text('0800L')
                   ]),
                   TableRow(children: [
                     Align(
                         alignment: Alignment.centerLeft,
                         child: Icon(Icons.brightness_5)),
-                    Text('${widget.airport.ssetz}Z'),
-                    Text('${widget.airport.ssetl}L')
+                    Text('1600Z'),
+                    Text('1800L')
                   ])
                 ],
               )),
         ),
         Card(
-          child: ListTile(
-              title: Text('Runways',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: widget.airport.rwysi.length,
-                  itemBuilder: (context, i) {
-                    return Row(children: <Widget>[
-                      Expanded(child: Text(widget.airport.rwysi[i])),
-                      Expanded(child: Text('${widget.airport.rwysd[i]} ft')),
-                      Expanded(child: Text(widget.airport.rwyst[i]))
-                    ]);
-                  })),
-        ),
+            child: ListTile(
+                title: Text('Runways',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: FutureBuilder(
+                    future: runways,
+                    builder:
+                        (BuildContext context, AsyncSnapshot<List> snapshot) {
+                      if (!snapshot.hasData)
+                        return Container();
+                      else {
+                        return new ListView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (context, i) {
+                              return Column(children: <Widget>[
+                                Align(
+                                  child: Text(snapshot.data[i].name,
+                                      style: TextStyle(
+                                          color:
+                                              Theme.of(context).accentColor)),
+                                  alignment: Alignment.centerLeft,
+                                ),
+                                Align(
+                                  child: Text(
+                                      '${snapshot.data[i].length} ${snapshot.data[i].lengthUnit} X ${snapshot.data[i].width} ${snapshot.data[i].widthUnit} (${snapshot.data[i].surface})'),
+                                  alignment: Alignment.centerLeft,
+                                )
+                              ]);
+                            });
+                      }
+                    }))),
         Card(
           child: ListTile(
               title: Text('Frequencies',
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: widget.airport.frqi.length,
-                  itemBuilder: (context, i) {
-                    return Row(children: <Widget>[
-                      Expanded(child: Text(widget.airport.frqi[i])),
-                      Expanded(child: Text(widget.airport.frqf[i])),
-                      Expanded(child: Text(widget.airport.frqc[i]))
-                    ]);
+              subtitle: FutureBuilder(
+                  future: frequencies,
+                  builder:
+                      (BuildContext context, AsyncSnapshot<List> snapshot) {
+                    if (!snapshot.hasData)
+                      return Container();
+                    else {
+                      return new ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (context, i) {
+                            return Column(children: <Widget>[
+                              Align(
+                                child: Text(
+                                    '<${snapshot.data[i].frequency}> ${snapshot.data[i].callsign}',
+                                    style: TextStyle(
+                                        color: Theme.of(context).accentColor)),
+                                alignment: Alignment.centerLeft,
+                              ),
+                              Align(
+                                child: Text(
+                                    '${snapshot.data[i].category} (${snapshot.data[i].type})'),
+                                alignment: Alignment.centerLeft,
+                              )
+                            ]);
+                          });
+                    }
                   })),
-        ),
-        Card(
-            child: ListTile(
-          title: Text('Contact',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(widget.airport.ctc),
-        )),
+        )
       ],
     );
   }
 }
 
-class _WxCard extends StatefulWidget {
+class _WxTab extends StatefulWidget {
   @override
-  _WxCardState createState() => _WxCardState();
+  _WxTabState createState() => _WxTabState();
 }
 
-class _WxCardState extends State<_WxCard> {
+class _WxTabState extends State<_WxTab> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
@@ -171,12 +232,12 @@ class _WxCardState extends State<_WxCard> {
   }
 }
 
-class _NotamCard extends StatefulWidget {
+class _NotamTab extends StatefulWidget {
   @override
-  _NotamCardState createState() => _NotamCardState();
+  _NotamTabState createState() => _NotamTabState();
 }
 
-class _NotamCardState extends State<_NotamCard> {
+class _NotamTabState extends State<_NotamTab> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(

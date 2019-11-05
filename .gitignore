@@ -28,6 +28,9 @@
 .pub/
 build/
 
+# do not commit db for now
+/assets/database
+
 # to disable later
 /ios
 /test
