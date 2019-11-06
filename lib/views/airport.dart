@@ -4,6 +4,7 @@ import 'package:fluttair/model/database.dart';
 import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/model/runway.dart';
 import 'package:fluttair/model/frequency.dart';
+import 'package:fluttair/model/weather.dart';
 
 class AirportView extends StatefulWidget {
   final Airport airport;
@@ -34,8 +35,8 @@ class AirportViewState extends State<AirportView> {
         body: TabBarView(
           children: [
             _DataTab(airport: widget.airport),
-            _WxTab(),
-            _NotamTab(),
+            _WxTab(airport: widget.airport),
+            _NotamTab(airport: widget.airport),
           ],
         ),
       ),
@@ -200,39 +201,72 @@ class _DataTabState extends State<_DataTab> {
 }
 
 class _WxTab extends StatefulWidget {
+  final Airport airport;
+
+  _WxTab({Key key, @required this.airport}) : super(key: key);
+
   @override
   _WxTabState createState() => _WxTabState();
 }
 
 class _WxTabState extends State<_WxTab> {
+  Future<Weather> weather;
+
+  @override
+  void initState() {
+    weather = fetchWeather(widget.airport.icao);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      child: ListView(
-        children: <Widget>[
-          Card(
-              child: ListTile(
-            title: Text('METAR'),
-            subtitle: Text(
-                'ICAO 999999Z 00000KT 9999 -SHRA FEW040 SCT060 BKN080 OVC010 15/5 Q1013 TEMPO 7500 TSRA'),
-            trailing: Text(
-              'VFR',
-              style: TextStyle(color: Colors.green),
-            ),
-          )),
-          Card(
-              child: ListTile(
-                  title: Text('TAF'),
-                  subtitle: Text(
-                      'ICAO 999999Z 9999/9999 00000KT 9999 -SHRA FEW040 SCT060 TEMPO 9999/9999 99999G99KT 7500 TSRA PROB30 9999/9999 SN')))
-        ],
-      ),
-      onRefresh: _refreshTmp,
+      child: FutureBuilder(
+          future: weather,
+          builder: (BuildContext context, AsyncSnapshot<Weather> snapshot) {
+            if (snapshot.hasData) {
+              return ListView(
+                children: <Widget>[
+                  Card(
+                      child: ListTile(
+                    title: Text('METAR',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(snapshot.data.metar),
+                    trailing: Text(
+                      snapshot.data.flightRules,
+                      style: TextStyle(
+                          color: snapshot.data.color,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )),
+                  Card(
+                      child: ListTile(
+                          title: Text('TAF',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text(snapshot.data.taf)))
+                ],
+              );
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            }
+            // By default, show a loading spinner.
+            return Center(child: CircularProgressIndicator());
+          }),
+      onRefresh: () async {
+        setState(() {
+          weather = fetchWeather(widget.airport.icao);
+        });
+        return null;
+      },
     );
   }
 }
 
 class _NotamTab extends StatefulWidget {
+  final Airport airport;
+
+  _NotamTab({Key key, @required this.airport}) : super(key: key);
+
   @override
   _NotamTabState createState() => _NotamTabState();
 }
@@ -251,10 +285,6 @@ class _NotamTabState extends State<_NotamTab> {
                       'C)0704300500\n'
                       'E)DUE WIP TWY B SOUTH CLSD BTN F AND R. TWY R CLSD BTN A AND B AND DIVERTED VIA NEW GREEN CL AND BLUE EDGE LGT. CTN ADZ')))
         ]),
-        onRefresh: _refreshTmp);
+        onRefresh: () {});
   }
-}
-
-Future<Null> _refreshTmp() async {
-  print('refreshing...');
 }

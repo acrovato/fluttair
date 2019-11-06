@@ -61,6 +61,7 @@ class _AirportsTab extends StatefulWidget {
 class _AirportsTabState extends State<_AirportsTab> {
   static Future<List<Airport>> airports;
 
+  // TODO: consider using a List instead of Future<List> (https://grokonez.com/flutter/flutter-sqlite-example-listview-crud-operations-sqflite-plugin)
   @override
   void initState() {
     airports = DatabaseProvider().getAirports(widget.country);

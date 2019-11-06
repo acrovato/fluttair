@@ -1,26 +1,32 @@
 class Airspace {
-  String name;
-  String category;
-  String ceiling;
-  String ceilingUnit;
-  String ceilingRef;
-  String floor;
-  String floorUnit;
-  String floorRef;
-  List<double> latitude;
-  List<double> longitude;
+  final String name;
+  final String category;
+  final String ceiling;
+  final String ceilingUnit;
+  final String ceilingRef;
+  final String floor;
+  final String floorUnit;
+  final String floorRef;
+  final List<double> latitude;
+  final List<double> longitude;
 
-  Airspace.fromMap(Map<String, dynamic> map) {
-    name = map['name'];
-    category = map['category'];
-    ceiling = map['ceiling'];
-    ceilingUnit = map['ceilingUnit'];
-    ceilingRef = map['ceilingRef'];
-    floor = map['floor'];
-    floorUnit = map['floorUnit'];
-    floorRef = map['floorRef'];
+  Airspace(
+      {this.name,
+      this.category,
+      this.ceiling,
+      this.ceilingUnit,
+      this.ceilingRef,
+      this.floor,
+      this.floorUnit,
+      this.floorRef,
+      this.latitude,
+      this.longitude});
+
+  factory Airspace.fromMap(Map<String, dynamic> map) {
     String lat = map['lat'];
     String lng = map['lng'];
+    List<double> latitude;
+    List<double> longitude;
     if (lat != null && lng != null) {
       latitude = lat.split(',').map(double.parse).toList();
       longitude = lng.split(',').map(double.parse).toList();
@@ -28,7 +34,16 @@ class Airspace {
       latitude = [];
       longitude = [];
     }
-
-    //longitude = map['longitude'].split(',').map(double.parse).toList();
+    return Airspace(
+        name: map['name'],
+        category: map['category'],
+        ceiling: map['ceiling'],
+        ceilingUnit: map['ceilingUnit'],
+        ceilingRef: map['ceilingRef'],
+        floor: map['floor'],
+        floorUnit: map['floorUnit'],
+        floorRef: map['floorRef'],
+        latitude: latitude,
+        longitude: longitude);
   }
 }
