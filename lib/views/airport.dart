@@ -1,10 +1,14 @@
+import 'package:fluttair/custom_icons.dart';
 import 'package:flutter/material.dart';
+
+import 'package:fluttair/custom_icons.dart' show CustomIcons;
 
 import 'package:fluttair/model/database.dart';
 import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/model/runway.dart';
 import 'package:fluttair/model/frequency.dart';
 import 'package:fluttair/model/weather.dart';
+import 'package:fluttair/model/notam.dart';
 
 class AirportView extends StatefulWidget {
   final Airport airport;
@@ -107,26 +111,29 @@ class _DataTabState extends State<_DataTab> {
                 ]))),
         Card(
           child: ListTile(
-              title: Text('Timezone',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Table(
-                children: [
-                  TableRow(children: [
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: Icon(Icons.brightness_7)),
-                    Text('0600Z'),
-                    Text('0800L')
-                  ]),
-                  TableRow(children: [
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: Icon(Icons.brightness_5)),
-                    Text('1600Z'),
-                    Text('1800L')
-                  ])
-                ],
-              )),
+            title:
+                Text('Timezone', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(CustomIcons.sunrise, size: 32),
+                    Expanded(
+                        child: Text(
+                            '${widget.airport.sunriseZ} - ${widget.airport.sunriseL}'))
+                  ],
+                ),
+                Row(
+                  children: <Widget>[
+                    Icon(CustomIcons.sunset, size: 32),
+                    Expanded(
+                        child: Text(
+                            '${widget.airport.sunsetZ} - ${widget.airport.sunsetL}'))
+                  ],
+                )
+              ],
+            ),
+          ),
         ),
         Card(
             child: ListTile(
@@ -221,44 +228,57 @@ class _WxTabState extends State<_WxTab> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      child: FutureBuilder(
-          future: weather,
-          builder: (BuildContext context, AsyncSnapshot<Weather> snapshot) {
-            if (snapshot.hasData) {
-              return ListView(
-                children: <Widget>[
-                  Card(
-                      child: ListTile(
-                    title: Text('METAR',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(snapshot.data.metar),
-                    trailing: Text(
-                      snapshot.data.flightRules,
-                      style: TextStyle(
-                          color: snapshot.data.color,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  )),
-                  Card(
-                      child: ListTile(
-                          title: Text('TAF',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(snapshot.data.taf)))
-                ],
-              );
-            } else if (snapshot.hasError) {
-              return Text('${snapshot.error}');
-            }
-            // By default, show a loading spinner.
-            return Center(child: CircularProgressIndicator());
-          }),
-      onRefresh: () async {
-        setState(() {
-          weather = fetchWeather(widget.airport.icao);
+        child: FutureBuilder(
+            future: weather,
+            builder: (BuildContext context, AsyncSnapshot<Weather> snapshot) {
+              if (snapshot.hasData) {
+                return ListView(
+                  children: <Widget>[
+                    Card(
+                        child: ListTile(
+                      title: Text('METAR',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(snapshot.data.metar),
+                      trailing: Text(
+                        snapshot.data.flightRules,
+                        style: TextStyle(
+                            color: snapshot.data.color,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    )),
+                    Container(
+                        child: Text(snapshot.data.mtFetchTime,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).accentColor)),
+                        margin: EdgeInsets.only(
+                            left: 10.0, top: 2.0, bottom: 10.0, right: 0.0)),
+                    Card(
+                        child: ListTile(
+                            title: Text('TAF',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(snapshot.data.taf))),
+                    Container(
+                        child: Text(snapshot.data.tfFetchTime,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).accentColor)),
+                        margin: EdgeInsets.only(
+                            left: 10.0, top: 2.0, bottom: 10.0, right: 0.0)),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+              // By default, show a loading spinner.
+              return Center(child: CircularProgressIndicator());
+            }),
+        onRefresh: () async {
+          setState(() {
+            weather = fetchWeather(widget.airport.icao);
+          });
+          return null;
         });
-        return null;
-      },
-    );
   }
 }
 
@@ -272,19 +292,52 @@ class _NotamTab extends StatefulWidget {
 }
 
 class _NotamTabState extends State<_NotamTab> {
+  Future<Notam> notam;
+
+  @override
+  void initState() {
+    notam = fetchNotam(widget.airport.icao);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-        child: ListView(children: <Widget>[
-          Card(
-              child: ListTile(
-                  title: Text('A1234/06 NOTAMR A1212/06\n'
-                      'Q)ICAO/QMXLC/IV/NBO/A/000/999/5129N00028W005\n'
-                      'A)EGLL\n'
-                      'B)0609050500\n'
-                      'C)0704300500\n'
-                      'E)DUE WIP TWY B SOUTH CLSD BTN F AND R. TWY R CLSD BTN A AND B AND DIVERTED VIA NEW GREEN CL AND BLUE EDGE LGT. CTN ADZ')))
-        ]),
-        onRefresh: () {});
+        child: FutureBuilder(
+            future: notam,
+            builder: (BuildContext context, AsyncSnapshot<Notam> snapshot) {
+              if (snapshot.hasData) {
+                return Column(children: <Widget>[
+                  Align(
+                      child: Container(
+                          child: Text(snapshot.data.fetchTime,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).accentColor)),
+                          margin: EdgeInsets.only(
+                              left: 10.0, top: 5.0, bottom: 10.0, right: 0.0)),
+                      alignment: Alignment.centerLeft),
+                  Expanded(
+                      child: ListView.builder(
+                          itemCount: snapshot.data.notams.length,
+                          itemBuilder: (BuildContext context, int i) {
+                            return Card(
+                                child: Container(
+                                    child: Text(snapshot.data.notams[i]),
+                                    margin: EdgeInsets.all(10)));
+                          }))
+                ]);
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+              // By default, show a loading spinner.
+              return Center(child: CircularProgressIndicator());
+            }),
+        onRefresh: () async {
+          setState(() {
+            notam = fetchNotam(widget.airport.icao);
+          });
+          return null;
+        });
   }
 }

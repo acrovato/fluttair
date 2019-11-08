@@ -1,3 +1,7 @@
+import 'package:flutter_suncalc/flutter_suncalc.dart';
+import 'package:intl/intl.dart';
+
+// TODO: convert type into something user-friendly
 class Airport {
   final int id;
   final String icao;
@@ -8,8 +12,10 @@ class Airport {
   final double longitude;
   final int elevation;
   final String elevationUnit;
-
-  // TODO: https://pub.dev/documentation/flutter_suncalc/latest/ to get timezone
+  final String sunriseZ;
+  final String sunriseL;
+  final String sunsetZ;
+  final String sunsetL;
 
   Airport(
       {this.id,
@@ -20,9 +26,19 @@ class Airport {
       this.latitude,
       this.longitude,
       this.elevation,
-      this.elevationUnit});
+      this.elevationUnit,
+      this.sunriseZ,
+      this.sunriseL,
+      this.sunsetZ,
+      this.sunsetL});
 
   factory Airport.fromMap(Map<String, dynamic> map) {
+    var times = SunCalc.getTimes(DateTime.now(), map['latitude'], map['longitude']);
+    String sunriseZ = '${DateFormat('HHmm').format(times["sunrise"].toUtc())}Z';
+    String sunriseL = '${DateFormat('HHmm').format(times["sunrise"].toLocal())}L';
+    String sunsetZ = '${DateFormat('HHmm').format(times["sunset"].toUtc())}Z';
+    String sunsetL = '${DateFormat('HHmm').format(times["sunset"].toLocal())}L';
+
     return Airport(
         id: map['id'],
         icao: map['icao'] ?? '----',
@@ -32,6 +48,10 @@ class Airport {
         latitude: map['latitude'],
         longitude: map['longitude'],
         elevation: map['elevation'],
-        elevationUnit: map['elevationUnit']);
+        elevationUnit: map['elevationUnit'],
+        sunriseZ: sunriseZ,
+        sunriseL: sunriseL,
+        sunsetZ: sunsetZ,
+        sunsetL: sunsetL);
   }
 }
