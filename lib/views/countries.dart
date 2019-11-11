@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:fluttair/model/database.dart';
+import 'package:fluttair/database/local.dart';
 
 import 'sidebar.dart';
 import 'country.dart';
@@ -18,9 +18,7 @@ class CountriesViewState extends State<CountriesView> {
     return FutureBuilder(
         future: dbProvider.getCountries(),
         builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (!snapshot.hasData)
-            return Container();
-          else {
+          if (snapshot.hasData) {
             return new ListView.builder(
                 shrinkWrap: true,
                 itemCount: snapshot.data.length,
@@ -39,6 +37,12 @@ class CountriesViewState extends State<CountriesView> {
                                     CountryView(country: snapshot.data[i])));
                       });
                 });
+          } else if (snapshot.hasError) {
+            return Container(
+                child: Text(snapshot.error.toString()),
+                margin: EdgeInsets.all(10));
+          } else {
+            return Center(child: CircularProgressIndicator());
           }
         });
   }

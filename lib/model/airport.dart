@@ -1,7 +1,6 @@
 import 'package:flutter_suncalc/flutter_suncalc.dart';
 import 'package:intl/intl.dart';
 
-// TODO: convert type into something user-friendly
 class Airport {
   final int id;
   final String icao;
@@ -33,18 +32,80 @@ class Airport {
       this.sunsetL});
 
   factory Airport.fromMap(Map<String, dynamic> map) {
-    var times = SunCalc.getTimes(DateTime.now(), map['latitude'], map['longitude']);
+    var times =
+        SunCalc.getTimes(DateTime.now(), map['latitude'], map['longitude']);
     String sunriseZ = '${DateFormat('HHmm').format(times["sunrise"].toUtc())}Z';
-    String sunriseL = '${DateFormat('HHmm').format(times["sunrise"].toLocal())}L';
+    String sunriseL =
+        '${DateFormat('HHmm').format(times["sunrise"].toLocal())}L';
     String sunsetZ = '${DateFormat('HHmm').format(times["sunset"].toUtc())}Z';
     String sunsetL = '${DateFormat('HHmm').format(times["sunset"].toLocal())}L';
+
+    String type;
+    switch (map['type']) {
+      case 'AD_CLOSED':
+        {
+          type = 'Aerodrome (closed)';
+        }
+        break;
+      case 'AD_MIL':
+        {
+          type = 'Aerodrome (military)';
+        }
+        break;
+      case 'AF_CIVIL':
+        {
+          type = 'Aerodrome (civil)';
+        }
+        break;
+      case 'AF_MIL_CIVIL':
+        {
+          type = 'Aerodrome (military/civil)';
+        }
+        break;
+      case 'AF_WATER':
+        {
+          type = 'Hydrobase';
+        }
+        break;
+      case 'GLIDING':
+        {
+          type = 'Glider site';
+        }
+        break;
+      case 'HELI_CIVIL':
+        {
+          type = 'Heliport (civil)';
+        }
+        break;
+      case 'HELI_MIL':
+        {
+          type = 'Heliport (military)';
+        }
+        break;
+      case 'INTL_APT':
+        {
+          type = 'International airport';
+        }
+        break;
+      case 'LIGHT_AIRCRAFT':
+        {
+          type = 'ULM site';
+        }
+        break;
+
+      default:
+        {
+          type = map['type'];
+        }
+        break;
+    }
 
     return Airport(
         id: map['id'],
         icao: map['icao'] ?? '----',
         name: map['name'],
         country: map['country'],
-        type: map['type'],
+        type: type,
         latitude: map['latitude'],
         longitude: map['longitude'],
         elevation: map['elevation'],

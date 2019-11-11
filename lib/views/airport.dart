@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:fluttair/custom_icons.dart' show CustomIcons;
 
-import 'package:fluttair/model/database.dart';
+import 'package:fluttair/database/local.dart';
+import 'package:fluttair/database/internet.dart';
 import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/model/runway.dart';
 import 'package:fluttair/model/frequency.dart';
@@ -143,9 +144,7 @@ class _DataTabState extends State<_DataTab> {
                     future: runways,
                     builder:
                         (BuildContext context, AsyncSnapshot<List> snapshot) {
-                      if (!snapshot.hasData)
-                        return Container();
-                      else {
+                      if (snapshot.hasData) {
                         return new ListView.builder(
                             physics: const NeverScrollableScrollPhysics(),
                             shrinkWrap: true,
@@ -166,6 +165,12 @@ class _DataTabState extends State<_DataTab> {
                                 )
                               ]);
                             });
+                      } else if (snapshot.hasError) {
+                        return Container(
+                            child: Text(snapshot.error.toString()),
+                            margin: EdgeInsets.all(10));
+                      } else {
+                        return Center(child: CircularProgressIndicator());
                       }
                     }))),
         Card(
@@ -176,9 +181,7 @@ class _DataTabState extends State<_DataTab> {
                   future: frequencies,
                   builder:
                       (BuildContext context, AsyncSnapshot<List> snapshot) {
-                    if (!snapshot.hasData)
-                      return Container();
-                    else {
+                    if (snapshot.hasData) {
                       return new ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
@@ -199,6 +202,12 @@ class _DataTabState extends State<_DataTab> {
                               )
                             ]);
                           });
+                    } else if (snapshot.hasError) {
+                      return Container(
+                          child: Text(snapshot.error.toString()),
+                          margin: EdgeInsets.all(10));
+                    } else {
+                      return Center(child: CircularProgressIndicator());
                     }
                   })),
         )
@@ -217,11 +226,12 @@ class _WxTab extends StatefulWidget {
 }
 
 class _WxTabState extends State<_WxTab> {
-  Future<Weather> weather;
+  final weatherProvider = WeatherProvider();
+  Color statusColor;
 
   @override
   void initState() {
-    weather = fetchWeather(widget.airport.icao);
+    statusColor = Colors.red;
     super.initState();
   }
 
@@ -229,7 +239,7 @@ class _WxTabState extends State<_WxTab> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
         child: FutureBuilder(
-            future: weather,
+            future: weatherProvider.get(widget.airport.icao),
             builder: (BuildContext context, AsyncSnapshot<Weather> snapshot) {
               if (snapshot.hasData) {
                 return ListView(
@@ -242,7 +252,7 @@ class _WxTabState extends State<_WxTab> {
                       trailing: Text(
                         snapshot.data.flightRules,
                         style: TextStyle(
-                            color: snapshot.data.color,
+                            color: snapshot.data.getFlightRulesColor(),
                             fontWeight: FontWeight.bold),
                       ),
                     )),
@@ -250,7 +260,7 @@ class _WxTabState extends State<_WxTab> {
                         child: Text(snapshot.data.mtFetchTime,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).accentColor)),
+                                color: statusColor)),
                         margin: EdgeInsets.only(
                             left: 10.0, top: 2.0, bottom: 10.0, right: 0.0)),
                     Card(
@@ -262,21 +272,31 @@ class _WxTabState extends State<_WxTab> {
                         child: Text(snapshot.data.tfFetchTime,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).accentColor)),
+                                color: statusColor)),
                         margin: EdgeInsets.only(
                             left: 10.0, top: 2.0, bottom: 10.0, right: 0.0)),
                   ],
                 );
               } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
+                return Container(
+                    child: Text(snapshot.error.toString()),
+                    margin: EdgeInsets.all(10));
+              } else {
+                return Center(child: CircularProgressIndicator());
               }
-              // By default, show a loading spinner.
-              return Center(child: CircularProgressIndicator());
             }),
         onRefresh: () async {
-          setState(() {
-            weather = fetchWeather(widget.airport.icao);
-          });
+          bool success = await weatherProvider.fetch(widget.airport.icao);
+          if (success)
+            statusColor = Colors.green;
+          else {
+            statusColor = Colors.red;
+            final snackBar = SnackBar(
+              content: Text('Network error!'),
+            );
+            Scaffold.of(context).showSnackBar(snackBar);
+          }
+          setState(() {});
           return null;
         });
   }
@@ -292,11 +312,12 @@ class _NotamTab extends StatefulWidget {
 }
 
 class _NotamTabState extends State<_NotamTab> {
-  Future<Notam> notam;
+  final notamsProvider = NotamsProvider();
+  Color statusColor;
 
   @override
   void initState() {
-    notam = fetchNotam(widget.airport.icao);
+    statusColor = Colors.red;
     super.initState();
   }
 
@@ -304,7 +325,7 @@ class _NotamTabState extends State<_NotamTab> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
         child: FutureBuilder(
-            future: notam,
+            future: notamsProvider.get(widget.airport.icao),
             builder: (BuildContext context, AsyncSnapshot<Notam> snapshot) {
               if (snapshot.hasData) {
                 return Column(children: <Widget>[
@@ -313,7 +334,7 @@ class _NotamTabState extends State<_NotamTab> {
                           child: Text(snapshot.data.fetchTime,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).accentColor)),
+                                  color: statusColor)),
                           margin: EdgeInsets.only(
                               left: 10.0, top: 5.0, bottom: 10.0, right: 0.0)),
                       alignment: Alignment.centerLeft),
@@ -328,15 +349,25 @@ class _NotamTabState extends State<_NotamTab> {
                           }))
                 ]);
               } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
+                return Container(
+                    child: Text(snapshot.error.toString()),
+                    margin: EdgeInsets.all(10));
+              } else {
+                return Center(child: CircularProgressIndicator());
               }
-              // By default, show a loading spinner.
-              return Center(child: CircularProgressIndicator());
             }),
         onRefresh: () async {
-          setState(() {
-            notam = fetchNotam(widget.airport.icao);
-          });
+          bool success = await notamsProvider.fetch(widget.airport.icao);
+          if (success)
+            statusColor = Colors.green;
+          else {
+            statusColor = Colors.red;
+            final snackBar = SnackBar(
+              content: Text('Network error!'),
+            );
+            Scaffold.of(context).showSnackBar(snackBar);
+          }
+          setState(() {});
           return null;
         });
   }

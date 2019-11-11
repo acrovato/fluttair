@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:fluttair/model/database.dart';
+import 'package:fluttair/database/local.dart';
 import 'package:fluttair/model/country.dart';
 import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/model/airspace.dart';
@@ -73,9 +73,7 @@ class _AirportsTabState extends State<_AirportsTab> {
     return FutureBuilder(
         future: airports,
         builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (!snapshot.hasData)
-            return Container();
-          else {
+          if (snapshot.hasData) {
             return new ListView.builder(
                 shrinkWrap: true,
                 itemCount: snapshot.data.length,
@@ -94,6 +92,12 @@ class _AirportsTabState extends State<_AirportsTab> {
                                     AirportView(airport: snapshot.data[i])));
                       });
                 });
+          } else if (snapshot.hasError) {
+            return Container(
+                child: Text(snapshot.error.toString()),
+                margin: EdgeInsets.all(10));
+          } else {
+            return Center(child: CircularProgressIndicator());
           }
         });
   }
@@ -122,9 +126,7 @@ class _AirspacesTabState extends State<_AirspacesTab> {
     return FutureBuilder(
         future: airspaces,
         builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (!snapshot.hasData)
-            return Container();
-          else {
+          if (snapshot.hasData) {
             return new ListView.builder(
                 shrinkWrap: true,
                 itemCount: snapshot.data.length,
@@ -143,6 +145,12 @@ class _AirspacesTabState extends State<_AirspacesTab> {
                                     AirspaceView(airspace: snapshot.data[i])));
                       });
                 });
+          } else if (snapshot.hasError) {
+            return Container(
+                child: Text(snapshot.error.toString()),
+                margin: EdgeInsets.all(10));
+          } else {
+            return Center(child: CircularProgressIndicator());
           }
         });
   }
@@ -171,9 +179,7 @@ class _NavaidsTabState extends State<_NavaidsTab> {
     return FutureBuilder(
         future: navaids,
         builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (!snapshot.hasData)
-            return Container();
-          else {
+          if (snapshot.hasData) {
             return new ListView.builder(
                 shrinkWrap: true,
                 itemCount: snapshot.data.length,
@@ -192,6 +198,12 @@ class _NavaidsTabState extends State<_NavaidsTab> {
                                     NavaidView(navaid: snapshot.data[i])));
                       });
                 });
+          } else if (snapshot.hasError) {
+            return Container(
+                child: Text(snapshot.error.toString()),
+                margin: EdgeInsets.all(10));
+          } else {
+            return Center(child: CircularProgressIndicator());
           }
         });
   }

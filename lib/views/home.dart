@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:fluttair/model/database.dart';
+import 'package:fluttair/database/local.dart';
+import 'package:fluttair/database/internet.dart';
 
 class HomeView extends StatefulWidget {
   @override
@@ -17,9 +18,13 @@ class HomeViewState extends State<HomeView> {
 
   checkData() {
     DatabaseProvider dbProvider = DatabaseProvider();
+    WeatherProvider weatherProvider = WeatherProvider();
+    NotamsProvider notamsProvider = NotamsProvider();
     // TODO: display message on screen (from database)
     dbProvider.database;
-    Timer(Duration(seconds: 3), () {
+    weatherProvider.weatherFile;
+    notamsProvider.notamsFile;
+    Timer(Duration(seconds: 1), () {
       Navigator.of(context).pushReplacementNamed('/flights');
     });
   }
