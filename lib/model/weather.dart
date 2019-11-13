@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Weather data
 class Weather {
-  final String metar;
-  final String taf;
-  final String flightRules;
-  final String mtFetchTime;
+  final String metar; // station METAR (raw text)
+  final String taf; // station TAF (ra text)
+  final String flightRules; // flight rules (VFR, ...)
+  final String mtFetchTime; // time at which data where downloaded
   final String tfFetchTime;
 
   Weather(
@@ -15,6 +16,7 @@ class Weather {
       this.tfFetchTime = 'No fetched data'});
 
   factory Weather.fromMap(Map<String, dynamic> map) {
+    //TODO add linebreaks on keywords?
     return Weather(
         metar: map['metar'],
         taf: map['taf'],

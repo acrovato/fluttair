@@ -292,7 +292,7 @@ class _WxTabState extends State<_WxTab> {
           else {
             statusColor = Colors.red;
             final snackBar = SnackBar(
-              content: Text('Network error!'),
+              content: Text('Network error'),
             );
             Scaffold.of(context).showSnackBar(snackBar);
           }
@@ -363,7 +363,7 @@ class _NotamTabState extends State<_NotamTab> {
           else {
             statusColor = Colors.red;
             final snackBar = SnackBar(
-              content: Text('Network error!'),
+              content: Text('Network error'),
             );
             Scaffold.of(context).showSnackBar(snackBar);
           }

@@ -1,14 +1,15 @@
+/// Navaid data
 class Navaid {
-  final String name;
-  final String type;
-  final String callsign;
-  final double latitude;
+  final String name; // beacon name
+  final String type; // beacon type (VOR, ...)
+  final String callsign; // beacon code (usually 3 letters)
+  final double latitude; // geolocation
   final double longitude;
   final int elevation;
   final String elevationUnit;
-  final String frequency;
-  final String channel;
-  final String range;
+  final String frequency; // frequency (MHz)
+  final String channel; // TACAN channel
+  final String range; // beacon range
   final String rangeUnit;
 
   Navaid(
@@ -33,8 +34,8 @@ class Navaid {
         longitude: map['longitude'],
         elevation: map['elevation'],
         elevationUnit: map['elevationUnit'],
-        frequency: map['frequency'],
-        channel: map['channel'],
+        frequency: (map['frequency'] ?? '') == '' ? '-' : map['frequency'],
+        channel: map['channel'] ?? '-',
         range: map['range'],
         rangeUnit: map['rangeUnit']);
   }

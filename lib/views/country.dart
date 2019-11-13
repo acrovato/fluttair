@@ -6,6 +6,8 @@ import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/model/airspace.dart';
 import 'package:fluttair/model/navaid.dart';
 
+import 'package:fluttair/utils/searchbar.dart';
+
 import 'airport.dart';
 import 'airspace.dart';
 import 'navaid.dart';
@@ -36,7 +38,6 @@ class CountryViewState extends State<CountryView> {
             ],
           ),
         ),
-        // TODO: implement a searchbar for each tab?
         body: TabBarView(
           children: [
             _AirportsTab(country: widget.country),
@@ -60,46 +61,73 @@ class _AirportsTab extends StatefulWidget {
 
 class _AirportsTabState extends State<_AirportsTab> {
   static Future<List<Airport>> airports;
+  TextEditingController searchController = TextEditingController();
+  String filter;
 
-  // TODO: consider using a List instead of Future<List> (https://grokonez.com/flutter/flutter-sqlite-example-listview-crud-operations-sqflite-plugin)
   @override
   void initState() {
     airports = DatabaseProvider().getAirports(widget.country);
+    searchController.addListener(() {
+      setState(() {
+        filter = searchController.text;
+      });
+    });
     super.initState();
+  }
+
+  Widget searchResults(BuildContext context, List data, int i, String filter) {
+    if (filter == null || filter.isEmpty)
+      return airportTile(context, data, i);
+    else if (data[i]
+            .icao
+            .toString()
+            .toLowerCase()
+            .contains(filter.toLowerCase()) ||
+        data[i].name.toString().toLowerCase().contains(filter.toLowerCase()))
+      return airportTile(context, data, i);
+    else
+      return Container();
+  }
+
+  Widget airportTile(BuildContext context, List data, int i) {
+    return ListTile(
+        title: Text(data[i].icao,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).accentColor)),
+        subtitle: Text(data[i].name),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AirportView(airport: data[i])));
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: airports,
-        builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (snapshot.hasData) {
-            return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, i) {
-                  return ListTile(
-                      title: Text(snapshot.data[i].icao,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).accentColor)),
-                      subtitle: Text(snapshot.data[i].name),
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    AirportView(airport: snapshot.data[i])));
+    return Column(children: <Widget>[
+      searchBar(searchController, 'airports'),
+      Expanded(
+          child: FutureBuilder(
+              future: airports,
+              builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+                if (snapshot.hasData) {
+                  return new ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, i) {
+                        return searchResults(context, snapshot.data, i, filter);
                       });
-                });
-          } else if (snapshot.hasError) {
-            return Container(
-                child: Text(snapshot.error.toString()),
-                margin: EdgeInsets.all(10));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        });
+                } else if (snapshot.hasError) {
+                  return Container(
+                      child: Text(snapshot.error.toString()),
+                      margin: EdgeInsets.all(10));
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              }))
+    ]);
   }
 }
 
@@ -114,45 +142,73 @@ class _AirspacesTab extends StatefulWidget {
 
 class _AirspacesTabState extends State<_AirspacesTab> {
   static Future<List<Airspace>> airspaces;
+  TextEditingController searchController = TextEditingController();
+  String filter;
 
   @override
   void initState() {
     airspaces = DatabaseProvider().getAirspaces(widget.country);
+    searchController.addListener(() {
+      setState(() {
+        filter = searchController.text;
+      });
+    });
     super.initState();
+  }
+
+  // TODO: consider to query db to return only the needed list (less code, complexity handle by db, faster?)
+  Widget searchResults(BuildContext context, List data, int i, String filter) {
+    if (filter == null || filter.isEmpty)
+      return airspaceTile(context, data, i);
+    else if (data[i]
+        .name
+        .toString()
+        .toLowerCase()
+        .contains(filter.toLowerCase()))
+      return airspaceTile(context, data, i);
+    else
+      return Container();
+  }
+
+  Widget airspaceTile(BuildContext context, List data, int i) {
+    return ListTile(
+        title: Text(data[i].name,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).accentColor)),
+        subtitle: Text(data[i].category),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => AirspaceView(airspace: data[i])));
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: airspaces,
-        builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (snapshot.hasData) {
-            return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, i) {
-                  return ListTile(
-                      title: Text(snapshot.data[i].name,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).accentColor)),
-                      subtitle: Text(snapshot.data[i].category),
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    AirspaceView(airspace: snapshot.data[i])));
+    return Column(children: <Widget>[
+      searchBar(searchController, 'airspaces'),
+      Expanded(
+          child: FutureBuilder(
+              future: airspaces,
+              builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+                if (snapshot.hasData) {
+                  return new ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, i) {
+                        return searchResults(context, snapshot.data, i, filter);
                       });
-                });
-          } else if (snapshot.hasError) {
-            return Container(
-                child: Text(snapshot.error.toString()),
-                margin: EdgeInsets.all(10));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        });
+                } else if (snapshot.hasError) {
+                  return Container(
+                      child: Text(snapshot.error.toString()),
+                      margin: EdgeInsets.all(10));
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              }))
+    ]);
   }
 }
 
@@ -167,44 +223,72 @@ class _NavaidsTab extends StatefulWidget {
 
 class _NavaidsTabState extends State<_NavaidsTab> {
   static Future<List<Navaid>> navaids;
+  TextEditingController searchController = TextEditingController();
+  String filter;
 
   @override
   void initState() {
     navaids = DatabaseProvider().getNavaids(widget.country);
+    searchController.addListener(() {
+      setState(() {
+        filter = searchController.text;
+      });
+    });
     super.initState();
+  }
+
+  Widget searchResults(BuildContext context, List data, int i, String filter) {
+    if (filter == null || filter.isEmpty)
+      return navaidTile(context, data, i);
+    else if (data[i]
+            .callsign
+            .toString()
+            .toLowerCase()
+            .contains(filter.toLowerCase()) ||
+        data[i].name.toString().toLowerCase().contains(filter.toLowerCase()))
+      return navaidTile(context, data, i);
+    else
+      return Container();
+  }
+
+  Widget navaidTile(BuildContext context, List data, int i) {
+    return ListTile(
+        title: Text(data[i].callsign,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).accentColor)),
+        subtitle: Text(data[i].name),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => NavaidView(navaid: data[i])));
+        });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: navaids,
-        builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (snapshot.hasData) {
-            return new ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, i) {
-                  return ListTile(
-                      title: Text(snapshot.data[i].callsign,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).accentColor)),
-                      subtitle: Text(snapshot.data[i].name),
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    NavaidView(navaid: snapshot.data[i])));
+    return Column(children: <Widget>[
+      searchBar(searchController, 'navaids'),
+      Expanded(
+          child: FutureBuilder(
+              future: navaids,
+              builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+                if (snapshot.hasData) {
+                  return new ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (context, i) {
+                        return searchResults(context, snapshot.data, i, filter);
                       });
-                });
-          } else if (snapshot.hasError) {
-            return Container(
-                child: Text(snapshot.error.toString()),
-                margin: EdgeInsets.all(10));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        });
+                } else if (snapshot.hasError) {
+                  return Container(
+                      child: Text(snapshot.error.toString()),
+                      margin: EdgeInsets.all(10));
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              }))
+    ]);
   }
 }

@@ -1,19 +1,20 @@
 import 'package:flutter_suncalc/flutter_suncalc.dart';
 import 'package:intl/intl.dart';
 
+/// Airport data
 class Airport {
-  final int id;
-  final String icao;
-  final String name;
-  final String type;
-  final String country;
-  final double latitude;
+  final int id; // database key
+  final String icao; // ICAO code
+  final String name; // airport name
+  final String type; // airport type (civil, ...)
+  final String country; // country where the airport is
+  final double latitude; // geolocation
   final double longitude;
   final int elevation;
   final String elevationUnit;
-  final String sunriseZ;
+  final String sunriseZ; // sunrise time UTC and local
   final String sunriseL;
-  final String sunsetZ;
+  final String sunsetZ; // sunset time UTC and local
   final String sunsetL;
 
   Airport(

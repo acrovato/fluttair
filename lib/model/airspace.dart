@@ -1,13 +1,14 @@
+/// Airspace data
 class Airspace {
-  final String name;
-  final String category;
-  final String ceiling;
+  final String name; // airspace name
+  final String category; // airspace category (danger, ...)
+  final String ceiling; // vertical limits with unit and altimeter setting
   final String ceilingUnit;
   final String ceilingRef;
   final String floor;
   final String floorUnit;
   final String floorRef;
-  final List<double> latitude;
+  final List<double> latitude; // geolocation of perimeter points
   final List<double> longitude;
 
   Airspace(

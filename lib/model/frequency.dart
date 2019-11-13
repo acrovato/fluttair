@@ -1,8 +1,9 @@
+/// Frequency data
 class Frequency {
-  final String callsign;
-  final String frequency;
-  final String category;
-  final String type;
+  final String callsign; // name
+  final String frequency; // frequency (MHz)
+  final String category; // category (communication, ...)
+  final String type; // type (ground, ...)
 
   Frequency({this.callsign, this.frequency, this.category, this.type});
 

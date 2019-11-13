@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -10,23 +12,35 @@ class HomeView extends StatefulWidget {
 }
 
 class HomeViewState extends State<HomeView> {
+  Text _message;
+
   @override
   void initState() {
-    super.initState();
+    _message = Text('Loading data...');
     checkData();
+    super.initState();
   }
 
   checkData() {
     DatabaseProvider dbProvider = DatabaseProvider();
     WeatherProvider weatherProvider = WeatherProvider();
     NotamsProvider notamsProvider = NotamsProvider();
-    // TODO: display message on screen (from database)
-    dbProvider.database;
-    weatherProvider.weatherFile;
-    notamsProvider.notamsFile;
-    Timer(Duration(seconds: 1), () {
-      Navigator.of(context).pushReplacementNamed('/flights');
-    });
+    try {
+      dbProvider.database;
+      weatherProvider.weatherFile;
+      notamsProvider.notamsFile;
+      setState(() {
+        _message = Text('Database sucessfully loaded',
+            style: TextStyle(color: Colors.green));
+      });
+      Timer(const Duration(milliseconds: 500),
+          () => Navigator.of(context).pushReplacementNamed('/flights'));
+    } on FileSystemException catch (e) {
+      setState(() {
+        _message = Text('Error while loading database\n' + e.toString(),
+            style: TextStyle(color: Colors.green));
+      });
+    }
   }
 
   @override
@@ -35,12 +49,20 @@ class HomeViewState extends State<HomeView> {
         appBar: AppBar(
           title: Text('Welcome to FluttAir!'),
         ),
-        body: Center(
-            child: Column(children: <Widget>[
-          CircularProgressIndicator(
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(Theme.of(context).accentColor)),
-          Text('Loading data...')
-        ], mainAxisAlignment: MainAxisAlignment.center)));
+        body: Stack(children: <Widget>[
+          Center(child: FlutterLogo(size: 128)),
+          Align(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: 250.0),
+                child: Row(children: <Widget>[
+                  CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).accentColor)),
+                  _message
+                ], mainAxisAlignment: MainAxisAlignment.spaceBetween),
+                margin: EdgeInsets.all(20),
+              ),
+              alignment: Alignment.bottomCenter)
+        ]));
   }
 }
