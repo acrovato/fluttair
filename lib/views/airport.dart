@@ -11,6 +11,7 @@ import 'package:fluttair/model/frequency.dart';
 import 'package:fluttair/model/weather.dart';
 import 'package:fluttair/model/notam.dart';
 
+/// Airport view
 class AirportView extends StatefulWidget {
   final Airport airport;
 
@@ -49,6 +50,7 @@ class AirportViewState extends State<AirportView> {
   }
 }
 
+/// Airport info tab
 class _DataTab extends StatefulWidget {
   final Airport airport;
 
@@ -216,6 +218,7 @@ class _DataTabState extends State<_DataTab> {
   }
 }
 
+/// Weather (METAR & TAF tab)
 class _WxTab extends StatefulWidget {
   final Airport airport;
 
@@ -311,6 +314,7 @@ class _NotamTab extends StatefulWidget {
   _NotamTabState createState() => _NotamTabState();
 }
 
+/// NOTAM tab
 class _NotamTabState extends State<_NotamTab> {
   final notamsProvider = NotamsProvider();
   Color statusColor;

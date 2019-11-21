@@ -12,6 +12,7 @@ import 'airport.dart';
 import 'airspace.dart';
 import 'navaid.dart';
 
+/// Country view
 class CountryView extends StatefulWidget {
   final Country country;
 
@@ -50,6 +51,7 @@ class CountryViewState extends State<CountryView> {
   }
 }
 
+/// Airport list tab
 class _AirportsTab extends StatefulWidget {
   final Country country;
 
@@ -131,6 +133,7 @@ class _AirportsTabState extends State<_AirportsTab> {
   }
 }
 
+/// Airspace list tab
 class _AirspacesTab extends StatefulWidget {
   final Country country;
 
@@ -212,6 +215,7 @@ class _AirspacesTabState extends State<_AirspacesTab> {
   }
 }
 
+/// Navaid list tab
 class _NavaidsTab extends StatefulWidget {
   final Country country;
 

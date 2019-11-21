@@ -5,6 +5,7 @@ import 'package:fluttair/database/local.dart';
 import 'sidebar.dart';
 import 'country.dart';
 
+/// Countries view
 class CountriesView extends StatefulWidget {
   @override
   CountriesViewState createState() => CountriesViewState();

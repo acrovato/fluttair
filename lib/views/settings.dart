@@ -6,6 +6,7 @@ import 'package:fluttair/database/internet.dart';
 
 import 'sidebar.dart';
 
+/// Preference page
 class SettingsView extends StatefulWidget {
   SettingsView({Key key}) : super(key: key);
 

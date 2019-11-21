@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/internet.dart';
 
+/// Splash screen
 class HomeView extends StatefulWidget {
   @override
   HomeViewState createState() => HomeViewState();

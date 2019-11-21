@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Sidebar (menu)
 class SideBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

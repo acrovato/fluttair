@@ -13,6 +13,7 @@ import 'package:fluttair/model/frequency.dart';
 import 'package:fluttair/model/airspace.dart';
 import 'package:fluttair/model/navaid.dart';
 
+/// Airport/Airspace/Navaid database
 class DatabaseProvider {
   static DatabaseProvider _databaseProvider;
   static Database _database;

@@ -20,16 +20,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  preferences:
-  dynamic_theme:
-  sqflite:
-  path:
-  path_provider:
-  http:
-  xml:
-  html:
-  intl:
-  flutter_suncalc:
+  preferences: 5.0.2
+  dynamic_theme: 1.0.1
+  sqflite: 1.1.7
+  path: 1.6.4
+  path_provider: 1.4.2
+  http: 0.12.0
+  xml: 3.5.0
+  html: 0.14.0
+  intl: 0.16.0
+  flutter_suncalc: 0.1.0
 
 dev_dependencies:
   flutter_test:

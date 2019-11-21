@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fluttair/model/airspace.dart';
 
+/// Airspace view
 class AirspaceView extends StatefulWidget {
   final Airspace airspace;
 

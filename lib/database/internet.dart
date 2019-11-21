@@ -13,6 +13,7 @@ import 'package:html/dom.dart';
 import 'package:fluttair/model/weather.dart';
 import 'package:fluttair/model/notam.dart';
 
+/// Weather database (from NOOA)
 class WeatherProvider {
   static WeatherProvider _weatherProvider;
   static File _weatherFile;
@@ -124,12 +125,14 @@ class WeatherProvider {
       return true;
     }
     // if no connection
-    on SocketException catch (_) {
+    on SocketException catch (e) {
+      print(e.toString());
       return false;
     }
   }
 }
 
+/// NOTAM database (from Pilotweb)
 class NotamsProvider {
   static NotamsProvider _notamsProvider;
   static File _notamsFile;

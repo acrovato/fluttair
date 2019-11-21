@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fluttair/model/navaid.dart';
 
+/// Navaid view
 class NavaidView extends StatefulWidget {
   final Navaid navaid;
 
