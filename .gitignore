@@ -30,6 +30,7 @@ build/
 
 # do not commit db for now
 /assets/database
+/assets/maps
 
 # to disable later
 /ios

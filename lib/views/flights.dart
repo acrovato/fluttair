@@ -25,11 +25,18 @@ class MyFlightsCard extends StatelessWidget {
   }
 }
 
-class FlightsView extends StatelessWidget {
+class FlightsView extends StatefulWidget {
+  FlightsView({Key key}) : super(key: key);
+
+  @override
+  FlightsViewState createState() => FlightsViewState();
+}
+
+class FlightsViewState extends State<FlightsView> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         drawer: SideBar(),
         appBar: AppBar(
@@ -37,7 +44,6 @@ class FlightsView extends StatelessWidget {
           bottom: TabBar(
             tabs: [
               Tab(icon: Icon(Icons.flight_takeoff)),
-              Tab(icon: Icon(Icons.language)),
               Tab(icon: Icon(Icons.flight_land)),
             ],
           ),
@@ -45,7 +51,6 @@ class FlightsView extends StatelessWidget {
         body: TabBarView(
           children: [
             MyFlightsCard(Icons.flight_takeoff, 'Planned flights'),
-            MyFlightsCard(Icons.language, 'Map'),
             MyFlightsCard(Icons.flight_land, 'Recorded flights'),
           ],
         ),

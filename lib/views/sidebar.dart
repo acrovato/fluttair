@@ -33,6 +33,13 @@ class SideBar extends StatelessWidget {
             },
           ),
           ListTile(
+            title: Text('Map'),
+            onTap: () {
+              Navigator.pop(context);
+              ModalRoute.of(context).isFirst ? Navigator.pushNamed(context, '/map') : Navigator.pushReplacementNamed(context, '/map');
+            },
+          ),
+          ListTile(
             title: Text('Database'),
             onTap: () {
               Navigator.pop(context);
