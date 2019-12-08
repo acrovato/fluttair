@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:preferences/preferences.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 
+import 'package:fluttair/utils/snackbar.dart';
+
 import 'package:fluttair/database/internet.dart';
 
 import 'sidebar.dart';
@@ -46,10 +48,8 @@ class SettingsViewState extends State<SettingsView> {
               onTap: () {
                 WeatherProvider provider = WeatherProvider();
                 provider.clear();
-                final snackBar = new SnackBar(
-                  content: new Text('Weather data cleared!'),
-                );
-                Scaffold.of(context).showSnackBar(snackBar);
+                Scaffold.of(context)
+                    .showSnackBar(snackBar('Weather data cleared!'));
               });
         }),
         Builder(builder: (context) {
@@ -58,10 +58,8 @@ class SettingsViewState extends State<SettingsView> {
               onTap: () {
                 NotamsProvider provider = NotamsProvider();
                 provider.clear();
-                final snackBar = new SnackBar(
-                  content: new Text('NOTAM data cleared!'),
-                );
-                Scaffold.of(context).showSnackBar(snackBar);
+                Scaffold.of(context)
+                    .showSnackBar(snackBar('NOTAM data cleared!'));
               });
         }),
         PreferenceTitle('Appearance'),

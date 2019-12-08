@@ -6,6 +6,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 
+import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
 
 class MapView extends StatefulWidget {
@@ -15,27 +17,29 @@ class MapView extends StatefulWidget {
   MapViewState createState() => MapViewState();
 }
 
-// TODO refactor: can the location be separated from the map?
 class MapViewState extends State<MapView> {
-  MapController _mapController = MapController();
+  // Location
   Location _locationService = Location();
   StreamSubscription<LocationData> _locationSubscription;
   LocationData _currentLocation;
-  bool _autoCentering;
-  List<Marker> _posit = List(1);
 
-  var route = <LatLng>[
-    LatLng(50.65, 5.45),
-    LatLng(50.70, 4.40),
-    LatLng(51.20, 2.87)
-  ];
+  // Map controls
+  MapController _mapController = MapController();
+  bool _autoCentering = false;
+
+  // Settings
+  int _refreshRate = 5;
+  LatLng _homeBase = LatLng(50.85, 4.35);
+
+  // Flight
+  Flight _flight;
+  bool _recording = false;
 
   @override
   void initState() {
-    _posit[0] = Marker(
-        point: LatLng(0.0, 0.0),
-        builder: (context) => Container(width: 0.0, height: 0.0));
     _initLocation();
+    _flight =
+        Flight([LatLng(50.65, 5.45), LatLng(50.70, 4.40), LatLng(51.20, 2.87)]);
     super.initState();
   }
 
@@ -45,10 +49,8 @@ class MapViewState extends State<MapView> {
   }
 
   void _initLocation() async {
-    _autoCentering = true;
     await _locationService.changeSettings(
-        accuracy: LocationAccuracy.NAVIGATION,
-        interval: 5000); // TODO allow to change refresh rate
+        accuracy: LocationAccuracy.NAVIGATION, interval: _refreshRate * 1000);
 
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
@@ -67,28 +69,16 @@ class MapViewState extends State<MapView> {
       }
     } on PlatformException catch (e) {
       print(e.toString());
-      if (e.code == 'PERMISSION_DENIED') {
-        Scaffold.of(context)
-            .showSnackBar(_getSnack('Access to Location denied'));
-      } else if (e.code == 'SERVICE_STATUS_ERROR') {
-        Scaffold.of(context).showSnackBar(_getSnack('Location status error'));
-      }
+      Scaffold.of(context).showSnackBar(snackBar(e.message));
     }
   }
 
-  // TODO move to utils
-  SnackBar _getSnack(String message) {
-    return SnackBar(
-      content: Text(message),
-    );
-  }
-
   void _subscribeToLocation() {
+    setState(() => _autoCentering = true);
     _locationSubscription =
         _locationService.onLocationChanged().listen((LocationData result) {
       setState(() {
         _currentLocation = result;
-        _posit[0] = _buildMarker();
         if (_autoCentering) _centerMap();
       });
     });
@@ -101,9 +91,10 @@ class MapViewState extends State<MapView> {
           _mapController.zoom);
   }
 
-  Marker _buildMarker() {
-    if (_currentLocation != null)
-      return Marker(
+  List<Marker> _buildPsMarker() {
+    if (_currentLocation != null) {
+      List<Marker> posit = List(1);
+      posit[0] = Marker(
         point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
         builder: (context) => Container(
             child: Transform.rotate(
@@ -114,10 +105,26 @@ class MapViewState extends State<MapView> {
                   size: 60,
                 ))),
       );
-    else
-      return Marker(
-          point: LatLng(0.0, 0.0),
-          builder: (context) => Container(width: 0.0, height: 0.0));
+      return posit;
+    } else
+      return [];
+  }
+
+  List<Marker> _buildRtMarker() {
+    if (_flight != null) {
+      List<Marker> route = List(_flight.steerpoints.length);
+      for (int i = 0; i < _flight.steerpoints.length; ++i) {
+        route[i] = Marker(
+            point: _flight.steerpoints[i],
+            builder: (context) => Icon(
+                  Icons.radio_button_unchecked,
+                  color: Colors.purple,
+                  size: 30,
+                ));
+      }
+      return route;
+    } else
+      return [];
   }
 
   Row _buildRow() {
@@ -134,14 +141,10 @@ class MapViewState extends State<MapView> {
     return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          _buildColumn('G/S', data[0]),
-          _buildColumn('HDG', data[1]),
-          _buildColumn('ALT', data[2])
+          Column(children: <Widget>[Text('G/S'), Text(data[0])]),
+          Column(children: <Widget>[Text('HDG'), Text(data[1])]),
+          Column(children: <Widget>[Text('ALT'), Text(data[2])]),
         ]);
-  }
-
-  Column _buildColumn(String title, String data) {
-    return Column(children: <Widget>[Text(title), Text(data)]);
   }
 
   @override
@@ -151,15 +154,21 @@ class MapViewState extends State<MapView> {
         appBar: AppBar(
           title: Text('Map'),
           actions: <Widget>[
-            // TODO
             IconButton(
-              icon: true
-                  ? Icon(Icons.radio_button_checked)
-                  : Icon(Icons.radio_button_unchecked),
+              icon: _recording
+                  ? Icon(Icons.radio_button_unchecked)
+                  : Icon(Icons.radio_button_checked),
               color: Colors.redAccent,
               splashColor: Colors.redAccent,
-              //iconSize: MediaQuery.of(context).size.height * 0.05,
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  if (!_recording) {
+                    if (_flight == null) _flight = Flight([]);
+                    _recording = _flight.record();
+                  } else
+                    _recording = _flight.stop();
+                });
+              },
             )
           ],
         ),
@@ -171,8 +180,7 @@ class MapViewState extends State<MapView> {
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  center: LatLng(50.85, 4.35),
-                  // TODO: Brussels location -> set to homebase
+                  center: _homeBase,
                   minZoom: 6.0,
                   maxZoom: 12.0,
                   zoom: 8.0,
@@ -184,11 +192,12 @@ class MapViewState extends State<MapView> {
                     tileProvider: MBTilesImageProvider.fromAsset(
                         'assets/maps/ofm_ebbu.mbtiles'),
                   ),
-                  MarkerLayerOptions(markers: _posit),
+                  MarkerLayerOptions(markers: _buildPsMarker()),
+                  MarkerLayerOptions(markers: _buildRtMarker()),
                   PolylineLayerOptions(
                     polylines: [
                       Polyline(
-                          points: route,
+                          points: _flight?.steerpoints ?? [],
                           strokeWidth: 4.0,
                           color: Colors.purple),
                     ],
@@ -211,15 +220,18 @@ class MapViewState extends State<MapView> {
                             onPressed: () {
                               if (_locationSubscription == null)
                                 _initLocation();
-                              setState(() {
-                                if (_autoCentering && _currentLocation != null)
-                                  _autoCentering = false;
-                                else {
-                                  _autoCentering = true;
-                                  _centerMap();
+                              else {
+                                if (_currentLocation != null) {
+                                  setState(() {
+                                    if (_autoCentering)
+                                      _autoCentering = false;
+                                    else {
+                                      _autoCentering = true;
+                                      _centerMap();
+                                    }
+                                  });
                                 }
-
-                              });
+                              }
                             })
                       ], mainAxisAlignment: MainAxisAlignment.spaceBetween),
                       alignment: Alignment.centerRight)),
