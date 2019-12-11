@@ -115,7 +115,7 @@ class _AirportsTabState extends State<_AirportsTab> {
               future: airports,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {
@@ -197,7 +197,7 @@ class _AirspacesTabState extends State<_AirspacesTab> {
               future: airspaces,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {
@@ -279,7 +279,7 @@ class _NavaidsTabState extends State<_NavaidsTab> {
               future: navaids,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {

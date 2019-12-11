@@ -13,6 +13,8 @@ import 'package:html/dom.dart';
 import 'package:fluttair/model/weather.dart';
 import 'package:fluttair/model/notam.dart';
 
+// TODO abstract class, as separate commit
+
 /// Weather database (from NOOA)
 class WeatherProvider {
   static WeatherProvider _weatherProvider;

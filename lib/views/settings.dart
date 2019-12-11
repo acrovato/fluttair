@@ -17,9 +17,39 @@ class SettingsView extends StatefulWidget {
 }
 
 class SettingsViewState extends State<SettingsView> {
+
+  var _scaffoldKey  = GlobalKey<ScaffoldState>();
+
+  // TODO use abstract, as separate commit
+  bool _showDialog(WeatherProvider provider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Clear weather data?"),
+          content: Text(
+              "This will remove all the downloaded METAR and TAF from your device."),
+          actions: <Widget>[
+            FlatButton(
+                child: Text("Clear"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  provider.clear();
+                  _scaffoldKey.currentState.showSnackBar(snackBar('Weather data cleared'));
+                }),
+            FlatButton(
+                child: Text("Cancel"),
+                onPressed: () => Navigator.of(context).pop())
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey ,
       drawer: SideBar(),
       appBar: AppBar(
         title: Text('Settings'),
@@ -45,11 +75,9 @@ class SettingsViewState extends State<SettingsView> {
         Builder(builder: (context) {
           return ListTile(
               title: Text('Clear weather data'),
-              onTap: () {
+              onTap: () async {
                 WeatherProvider provider = WeatherProvider();
-                provider.clear();
-                Scaffold.of(context)
-                    .showSnackBar(snackBar('Weather data cleared!'));
+                _showDialog(provider);
               });
         }),
         Builder(builder: (context) {
@@ -59,7 +87,7 @@ class SettingsViewState extends State<SettingsView> {
                 NotamsProvider provider = NotamsProvider();
                 provider.clear();
                 Scaffold.of(context)
-                    .showSnackBar(snackBar('NOTAM data cleared!'));
+                    .showSnackBar(snackBar('NOTAM data cleared'));
               });
         }),
         PreferenceTitle('Appearance'),

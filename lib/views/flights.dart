@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+
+import 'package:fluttair/model/flights.dart';
 
 import 'sidebar.dart';
 
@@ -50,11 +53,95 @@ class FlightsViewState extends State<FlightsView> {
         ),
         body: TabBarView(
           children: [
-            MyFlightsCard(Icons.flight_takeoff, 'Planned flights'),
+            _PlannedTab(),
             MyFlightsCard(Icons.flight_land, 'Recorded flights'),
           ],
         ),
       ),
     );
+  }
+}
+
+class _PlannedTab extends StatefulWidget {
+  _PlannedTab({Key key}) : super(key: key);
+
+  @override
+  _PlannedTabState createState() => _PlannedTabState();
+}
+
+class _PlannedTabState extends State<_PlannedTab> {
+  static Future<List<Flight>> flights;
+
+  // Temp
+  Future<List<Flight>> getFlights() {
+    Completer<List<Flight>> completer = Completer();
+    completer.complete([Flight([]), Flight([])]);
+    return completer.future;
+  }
+
+  @override
+  void initState() {
+    flights = getFlights();
+    super.initState();
+  }
+
+  Widget flightTile(BuildContext context, Flight flight) {
+    // TODO not entirely sure of what I am doing here...
+    List<PopupMenuItem<int>> _actions = List(2);
+
+    _actions[0] = PopupMenuItem<int>(child: Text('Delete'), value: 0);
+    _actions[1] = PopupMenuItem<int>(child: Text('Archive'), value: 1);
+
+    void _choiceAction(int choice) {
+      if (choice == 0)
+        print('Delete');
+      else if (choice == 1) print('Archive');
+    }
+
+    return Card(
+        child: ListTile(
+            title: Row(children: <Widget>[
+              Text(flight.departure,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).accentColor)),
+              Icon(Icons.arrow_right),
+              Text(flight.arrival,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).accentColor))
+            ]),
+            subtitle: Text(flight.name),
+            trailing: PopupMenuButton<int>(
+                onSelected: _choiceAction,
+                itemBuilder: (BuildContext context) => _actions),
+            onTap: () {
+              //  Navigator.push(
+              //      context,
+              //      MaterialPageRoute(
+              //          builder: (context) => FlightView(airport: data[i])));
+            }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: flights,
+        builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+                shrinkWrap: true,
+                itemCount: snapshot.data.length,
+                itemBuilder: (context, i) {
+                  return flightTile(context, snapshot.data[i]);
+                });
+          } else if (snapshot.hasError) {
+            return Container(
+                child: Text(snapshot.error.toString()),
+                margin: EdgeInsets.all(10));
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        });
   }
 }

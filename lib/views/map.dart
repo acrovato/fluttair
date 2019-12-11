@@ -17,6 +17,8 @@ class MapView extends StatefulWidget {
   MapViewState createState() => MapViewState();
 }
 
+// TODO keep screen awake unless power button
+// TODO add dropdown menu or load flight action
 class MapViewState extends State<MapView> {
   // Location
   Location _locationService = Location();
@@ -77,10 +79,11 @@ class MapViewState extends State<MapView> {
     setState(() => _autoCentering = true);
     _locationSubscription =
         _locationService.onLocationChanged().listen((LocationData result) {
-      setState(() {
-        _currentLocation = result;
-        if (_autoCentering) _centerMap();
-      });
+      if (mounted)
+        setState(() {
+          _currentLocation = result;
+          if (_autoCentering) _centerMap();
+        });
     });
   }
 
