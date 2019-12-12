@@ -17,25 +17,24 @@ class SettingsView extends StatefulWidget {
 }
 
 class SettingsViewState extends State<SettingsView> {
+  var _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  var _scaffoldKey  = GlobalKey<ScaffoldState>();
-
-  // TODO use abstract, as separate commit
-  bool _showDialog(WeatherProvider provider) {
+  void _showDialog(dynamic provider, String type) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Clear weather data?"),
+          title: Text("Clear $type data?"),
           content: Text(
-              "This will remove all the downloaded METAR and TAF from your device."),
+              "This will remove all the downloaded $type data from your device."),
           actions: <Widget>[
             FlatButton(
                 child: Text("Clear"),
                 onPressed: () {
                   Navigator.of(context).pop();
                   provider.clear();
-                  _scaffoldKey.currentState.showSnackBar(snackBar('Weather data cleared'));
+                  _scaffoldKey.currentState.showSnackBar(snackBar(
+                      '${type[0].toUpperCase()}${type.substring(1)} data cleared'));
                 }),
             FlatButton(
                 child: Text("Cancel"),
@@ -49,7 +48,7 @@ class SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey ,
+      key: _scaffoldKey,
       drawer: SideBar(),
       appBar: AppBar(
         title: Text('Settings'),
@@ -71,13 +70,13 @@ class SettingsViewState extends State<SettingsView> {
             cancelText: 'Cancel',
           ),
         ),
-        PreferenceTitle('Database'),
+        PreferenceTitle('User data'),
         Builder(builder: (context) {
           return ListTile(
               title: Text('Clear weather data'),
               onTap: () async {
                 WeatherProvider provider = WeatherProvider();
-                _showDialog(provider);
+                _showDialog(provider, 'weather');
               });
         }),
         Builder(builder: (context) {
@@ -85,9 +84,10 @@ class SettingsViewState extends State<SettingsView> {
               title: Text('Clear NOTAM data'),
               onTap: () {
                 NotamsProvider provider = NotamsProvider();
-                provider.clear();
-                Scaffold.of(context)
-                    .showSnackBar(snackBar('NOTAM data cleared'));
+                _showDialog(provider, 'NOTAM');
+                //provider.clear();
+                //Scaffold.of(context)
+                //    .showSnackBar(snackBar('NOTAM data cleared'));
               });
         }),
         PreferenceTitle('Appearance'),
