@@ -40,8 +40,12 @@ class MapViewState extends State<MapView> {
   @override
   void initState() {
     _initLocation();
-    _flight =
-        Flight([LatLng(50.65, 5.45), LatLng(50.70, 4.40), LatLng(51.20, 2.87)]);
+    _flight = Flight();
+    _flight.steerpoints = [
+      LatLng(50.65, 5.45),
+      LatLng(50.70, 4.40),
+      LatLng(51.20, 2.87)
+    ];
     super.initState();
   }
 
@@ -166,7 +170,7 @@ class MapViewState extends State<MapView> {
               onPressed: () {
                 setState(() {
                   if (!_recording) {
-                    if (_flight == null) _flight = Flight([]);
+                    if (_flight == null) _flight = Flight();
                     _recording = _flight.record();
                   } else
                     _recording = _flight.stop();

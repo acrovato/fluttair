@@ -4,6 +4,7 @@ import 'package:dynamic_theme/dynamic_theme.dart';
 
 import 'package:fluttair/utils/snackbar.dart';
 
+import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/database/internet.dart';
 
 import 'sidebar.dart';
@@ -26,7 +27,7 @@ class SettingsViewState extends State<SettingsView> {
         return AlertDialog(
           title: Text("Clear $type data?"),
           content: Text(
-              "This will remove all the downloaded $type data from your device."),
+              "This will remove all the $type data from your device."),
           actions: <Widget>[
             FlatButton(
                 child: Text("Clear"),
@@ -73,6 +74,14 @@ class SettingsViewState extends State<SettingsView> {
         PreferenceTitle('User data'),
         Builder(builder: (context) {
           return ListTile(
+              title: Text('Clear flight data'),
+              onTap: () async {
+                FlightProvider provider = FlightProvider();
+                _showDialog(provider, 'flight');
+              });
+        }),
+        Builder(builder: (context) {
+          return ListTile(
               title: Text('Clear weather data'),
               onTap: () async {
                 WeatherProvider provider = WeatherProvider();
@@ -85,9 +94,6 @@ class SettingsViewState extends State<SettingsView> {
               onTap: () {
                 NotamsProvider provider = NotamsProvider();
                 _showDialog(provider, 'NOTAM');
-                //provider.clear();
-                //Scaffold.of(context)
-                //    .showSnackBar(snackBar('NOTAM data cleared'));
               });
         }),
         PreferenceTitle('Appearance'),

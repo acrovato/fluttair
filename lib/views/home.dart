@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:fluttair/database/local.dart';
+import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/database/internet.dart';
 
 /// Splash screen
@@ -24,10 +25,12 @@ class HomeViewState extends State<HomeView> {
 
   checkData() {
     DatabaseProvider dbProvider = DatabaseProvider();
+    FlightProvider fltProvider = FlightProvider();
     WeatherProvider weatherProvider = WeatherProvider();
     NotamsProvider notamsProvider = NotamsProvider();
     try {
       dbProvider.database;
+      fltProvider.flightPath;
       weatherProvider.weatherFile;
       notamsProvider.notamsFile;
       setState(() {

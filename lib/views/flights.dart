@@ -1,7 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
+import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/views/flight.dart';
 
 import 'sidebar.dart';
 
@@ -70,18 +71,10 @@ class _PlannedTab extends StatefulWidget {
 }
 
 class _PlannedTabState extends State<_PlannedTab> {
-  static Future<List<Flight>> flights;
-
-  // Temp
-  Future<List<Flight>> getFlights() {
-    Completer<List<Flight>> completer = Completer();
-    completer.complete([Flight([]), Flight([])]);
-    return completer.future;
-  }
+  final FlightProvider _flightProvider = FlightProvider();
 
   @override
   void initState() {
-    flights = getFlights();
     super.initState();
   }
 
@@ -93,9 +86,10 @@ class _PlannedTabState extends State<_PlannedTab> {
     _actions[1] = PopupMenuItem<int>(child: Text('Archive'), value: 1);
 
     void _choiceAction(int choice) {
-      if (choice == 0)
-        print('Delete');
-      else if (choice == 1) print('Archive');
+      if (choice == 0) {
+        _flightProvider.deleteFlight(flight.name);
+        setState(() {});
+      } else if (choice == 1) print('Archive');
     }
 
     return Card(
@@ -116,32 +110,47 @@ class _PlannedTabState extends State<_PlannedTab> {
                 onSelected: _choiceAction,
                 itemBuilder: (BuildContext context) => _actions),
             onTap: () {
-              //  Navigator.push(
-              //      context,
-              //      MaterialPageRoute(
-              //          builder: (context) => FlightView(airport: data[i])));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => FlightView(flight: flight)));
             }));
+  }
+
+  Widget _flightList(AsyncSnapshot<List> snapshot) {
+    if (snapshot.hasData && snapshot.data.length != 0) {
+      return ListView.builder(
+          shrinkWrap: true,
+          itemCount: snapshot.data.length,
+          itemBuilder: (context, i) {
+            return flightTile(context, snapshot.data[i]);
+          });
+    } else if (snapshot.hasError) {
+      return Container(
+          child: Text(snapshot.error.toString()), margin: EdgeInsets.all(10));
+    } else {
+      return Center(child: Text('No flight planned'));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: flights,
+        future: _flightProvider.getFlights(),
         builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
-          if (snapshot.hasData) {
-            return ListView.builder(
-                shrinkWrap: true,
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, i) {
-                  return flightTile(context, snapshot.data[i]);
-                });
-          } else if (snapshot.hasError) {
-            return Container(
-                child: Text(snapshot.error.toString()),
-                margin: EdgeInsets.all(10));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
+          return Stack(children: <Widget>[
+            _flightList(snapshot),
+            Padding(
+                padding: EdgeInsets.only(bottom: 8.0, right: 8.0),
+                child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: FloatingActionButton(
+                        child: Icon(Icons.add),
+                        onPressed: () {
+                          _flightProvider.createFlight();
+                          setState(() {});
+                        })))
+          ]);
         });
   }
 }
