@@ -70,6 +70,16 @@ class DatabaseProvider {
     });
   }
 
+  Future<Airport> getAirport(String icao) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('Airports',
+        where: "icao = ?", whereArgs: [icao]);
+    if (maps.length == 1)
+      return Airport.fromMap(maps[0]);
+    else
+      return null;
+  }
+
   Future<List<Runway>> getRunways(Airport airport) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db

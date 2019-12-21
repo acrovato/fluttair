@@ -77,6 +77,12 @@ class _AirportsTabState extends State<_AirportsTab> {
     super.initState();
   }
 
+  @override
+  void dispose () {
+    searchController.dispose();
+    super.dispose();
+  }
+
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
       return airportTile(context, data, i);
@@ -159,6 +165,12 @@ class _AirspacesTabState extends State<_AirspacesTab> {
     super.initState();
   }
 
+  @override
+  void dispose () {
+    searchController.dispose();
+    super.dispose();
+  }
+
   // TODO: consider to query db to return only the needed list (less code, complexity handle by db, faster?)
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
@@ -239,6 +251,12 @@ class _NavaidsTabState extends State<_NavaidsTab> {
       });
     });
     super.initState();
+  }
+
+  @override
+  void dispose () {
+    searchController.dispose();
+    super.dispose();
   }
 
   Widget searchResults(BuildContext context, List data, int i, String filter) {

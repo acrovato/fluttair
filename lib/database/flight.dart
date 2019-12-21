@@ -44,30 +44,29 @@ class FlightProvider {
     List<FileSystemEntity> entries = _flightPath.listSync();
     List<Map<String, dynamic>> maps = [];
     for (var entry in entries) {
-      if (entry is File)
-        maps.add(json.decode(entry.readAsStringSync()));
+      if (entry is File) maps.add(json.decode(entry.readAsStringSync()));
     }
     return List.generate(maps.length, (i) {
       return Flight.fromMap(maps[i]);
     });
   }
 
-  void createFlight() {
+  void createFlight(int id) {
     // Create using default constructor and save to file
-    Map flight = Flight().toMap();
-    File file = File(join(_flightPath.path, flight['name']));
+    Map flight = Flight(id: id).toMap();
+    File file = File(join(_flightPath.path, '${flight['id']}'));
     file.writeAsStringSync(json.encode(flight));
   }
 
   void saveFlight(Flight flight) {
     // Save to disk
-    File file = File(join(_flightPath.path, flight.name));
+    File file = File(join(_flightPath.path, '${flight.id}'));
     file.writeAsStringSync(json.encode(flight.toMap()));
   }
 
-  void deleteFlight(String name) {
+  void deleteFlight(int id) {
     // Delete one flight
-    File file = File(join(_flightPath.path, name));
+    File file = File(join(_flightPath.path, '$id'));
     file.deleteSync();
   }
 
