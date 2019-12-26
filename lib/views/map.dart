@@ -6,7 +6,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 
+import 'package:fluttair/database/map.dart';
+import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/utils/radio_dialog.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
 
@@ -17,9 +20,14 @@ class MapView extends StatefulWidget {
   MapViewState createState() => MapViewState();
 }
 
-// TODO keep screen awake unless power button
-// TODO add dropdown menu or load flight action
+// TODO use database id instead of _flight/_mapChoice
+// TODO check and understand how the different maps are loaded and persist in memory
+// TODO keep screen awake unless power button + ongoing notification
 class MapViewState extends State<MapView> {
+  // Map
+  MapProvider _mapProvider = MapProvider();
+  int _mapChoice;
+
   // Location
   Location _locationService = Location();
   StreamSubscription<LocationData> _locationSubscription;
@@ -34,18 +42,14 @@ class MapViewState extends State<MapView> {
   LatLng _homeBase = LatLng(50.85, 4.35);
 
   // Flight
-  Flight _flight;
+  FlightProvider _flightProvider = FlightProvider();
+  int _flightChoice;
   bool _recording = false;
 
   @override
   void initState() {
+    _onMapChanged(0); // TODO should come from settings
     _initLocation();
-    _flight = Flight(id: 1000000);
-    _flight.steerpoints = [
-      LatLng(50.65, 5.45),
-      LatLng(50.70, 4.40),
-      LatLng(51.20, 2.87)
-    ];
     super.initState();
   }
 
@@ -91,6 +95,34 @@ class MapViewState extends State<MapView> {
     });
   }
 
+  void _setFlight() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => RadioDialog(
+            initial: _flightChoice,
+            choiceList: _flightProvider.getFlights(),
+            onChoiceChanged: _onFlightChanged,
+            title: 'Set flight'));
+  }
+
+  void _onFlightChanged(int choice) async {
+    setState(() => _flightChoice = choice);
+  }
+
+  void _setMap() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) => RadioDialog(
+            initial: _mapChoice,
+            choiceList: _mapProvider.getMaps(),
+            onChoiceChanged: _onMapChanged,
+            title: 'Set map'));
+  }
+
+  void _onMapChanged(int choice) async {
+    setState(() => _mapChoice = choice);
+  }
+
   void _centerMap() {
     if (_currentLocation != null)
       _mapController.move(
@@ -98,10 +130,10 @@ class MapViewState extends State<MapView> {
           _mapController.zoom);
   }
 
-  List<Marker> _buildPsMarker() {
+  List<Marker> _getPositMark() {
+    List<Marker> posit = List(0);
     if (_currentLocation != null) {
-      List<Marker> posit = List(1);
-      posit[0] = Marker(
+      posit.add(Marker(
         point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
         builder: (context) => Container(
             child: Transform.rotate(
@@ -111,27 +143,86 @@ class MapViewState extends State<MapView> {
                   color: Colors.indigo,
                   size: 60,
                 ))),
-      );
-      return posit;
-    } else
-      return [];
+      ));
+    }
+    return posit;
   }
 
-  List<Marker> _buildRtMarker() {
-    if (_flight != null) {
-      List<Marker> route = List(_flight.steerpoints.length);
-      for (int i = 0; i < _flight.steerpoints.length; ++i) {
+  List<Marker> _getRouteMark() {
+    Flight flight;
+    _flightChoice != null
+        ? flight = _flightProvider.getFlightsSync()[_flightChoice]
+        : flight = null;
+    List<Marker> route = [];
+    if (flight != null) {
+      route.length = flight.steerpoints.length;
+      for (int i = 0; i < flight.steerpoints.length; ++i) {
         route[i] = Marker(
-            point: _flight.steerpoints[i],
+            point: flight.steerpoints[i],
             builder: (context) => Icon(
                   Icons.radio_button_unchecked,
                   color: Colors.purple,
                   size: 30,
                 ));
       }
-      return route;
-    } else
-      return [];
+    }
+    return route;
+  }
+
+  Polyline _getRoute() {
+    Flight flight;
+    _flightChoice != null
+        ? flight = _flightProvider.getFlightsSync()[_flightChoice]
+        : flight = null;
+    return Polyline(
+        points: flight?.steerpoints ?? [],
+        strokeWidth: 4.0,
+        color: Colors.purple);
+  }
+
+  Widget _appBar() {
+    List<PopupMenuItem<int>> _actions = List(2);
+    _actions[0] = PopupMenuItem<int>(child: Text('Set map'), value: 0);
+    _actions[1] = PopupMenuItem<int>(child: Text('Set flight'), value: 1);
+
+    void _choiceAction(int choice) {
+      if (choice == 0)
+        setState(() => _setMap());
+      else if (choice == 1) setState(() => _setFlight());
+    }
+
+    return AppBar(
+      title: Text('Map'),
+      actions: <Widget>[
+        IconButton(
+          icon: _recording
+              ? Icon(Icons.radio_button_unchecked)
+              : Icon(Icons.radio_button_checked),
+          color: Colors.redAccent,
+          splashColor: Colors.redAccent,
+          onPressed: () {
+            setState(() {
+              if (!_recording) {
+                if (_flightChoice == null) {
+                  List<Flight> flights = _flightProvider.getFlightsSync();
+                  List<int> ids = List.generate(flights.length, (i) {
+                    return flights[i].id;
+                  });
+                  int newId = ids.fold(0, math.max) + 1;
+                  _flightProvider.createFlight(newId);
+                  //_flightChoice = 0; // TODO access right flight
+                }
+                _recording = true;
+              } else
+                _recording = false;
+            });
+          },
+        ),
+        PopupMenuButton<int>(
+            onSelected: _choiceAction,
+            itemBuilder: (BuildContext context) => _actions)
+      ],
+    );
   }
 
   Row _buildRow() {
@@ -158,59 +249,44 @@ class MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     return Scaffold(
         drawer: SideBar(),
-        appBar: AppBar(
-          title: Text('Map'),
-          actions: <Widget>[
-            IconButton(
-              icon: _recording
-                  ? Icon(Icons.radio_button_unchecked)
-                  : Icon(Icons.radio_button_checked),
-              color: Colors.redAccent,
-              splashColor: Colors.redAccent,
-              onPressed: () {
-                setState(() {
-                  if (!_recording) {
-                    if (_flight == null) _flight = Flight(id: 1000000);
-                    _recording = _flight.record();
-                  } else
-                    _recording = _flight.stop();
-                });
-              },
-            )
-          ],
-        ),
+        appBar: _appBar(),
         body: Card(
             child: Column(children: <Widget>[
           Flexible(
               child: Stack(
             children: <Widget>[
-              FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  center: _homeBase,
-                  minZoom: 6.0,
-                  maxZoom: 12.0,
-                  zoom: 8.0,
-                ),
-                layers: [
-                  // Offline
-                  TileLayerOptions(
-                    tms: true,
-                    tileProvider: MBTilesImageProvider.fromAsset(
-                        'assets/maps/ofm_ebbu.mbtiles'),
-                  ),
-                  MarkerLayerOptions(markers: _buildPsMarker()),
-                  MarkerLayerOptions(markers: _buildRtMarker()),
-                  PolylineLayerOptions(
-                    polylines: [
-                      Polyline(
-                          points: _flight?.steerpoints ?? [],
-                          strokeWidth: 4.0,
-                          color: Colors.purple),
-                    ],
-                  )
-                ],
-              ),
+              FutureBuilder(
+                  future: _mapProvider.getMaps(),
+                  builder:
+                      (BuildContext context, AsyncSnapshot<List> snapshot) {
+                    if (snapshot.hasData) {
+                      return FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          center: _homeBase,
+                          minZoom: 6.0,
+                          maxZoom: 12.0,
+                          zoom: 8.0,
+                        ),
+                        layers: [
+                          TileLayerOptions(
+                              tms: true,
+                              tileProvider: MBTilesImageProvider.fromFile(
+                                  snapshot.data[_mapChoice].file)),
+                          MarkerLayerOptions(markers: _getPositMark()),
+                          MarkerLayerOptions(markers: _getRouteMark()),
+                          PolylineLayerOptions(
+                            polylines: [_getRoute()],
+                          )
+                        ],
+                      );
+                    } else if (snapshot.hasError)
+                      return Container(
+                          child: Text(snapshot.error.toString()),
+                          margin: EdgeInsets.all(10));
+                    else
+                      return Center(child: CircularProgressIndicator());
+                  }),
               Padding(
                   padding: EdgeInsets.only(bottom: 16.0, right: 8.0, top: 8.0),
                   child: Align(
@@ -243,7 +319,8 @@ class MapViewState extends State<MapView> {
                       ], mainAxisAlignment: MainAxisAlignment.spaceBetween),
                       alignment: Alignment.centerRight)),
               Align(
-                child: Text('© OpenTileMap, OpenStreetMap contributors',
+                child: Text(
+                    '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
                     style: TextStyle(color: Colors.black, fontSize: 12)),
                 alignment: Alignment.bottomLeft,
               )

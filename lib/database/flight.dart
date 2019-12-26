@@ -51,6 +51,19 @@ class FlightProvider {
     });
   }
 
+  // TODO this is ugly... how to make it better?
+  List<Flight> getFlightsSync() {
+    // Get all flights
+    List<FileSystemEntity> entries = _flightPath.listSync();
+    List<Map<String, dynamic>> maps = [];
+    for (var entry in entries) {
+      if (entry is File) maps.add(json.decode(entry.readAsStringSync()));
+    }
+    return List.generate(maps.length, (i) {
+      return Flight.fromMap(maps[i]);
+    });
+  }
+
   void createFlight(int id) {
     // Create using default constructor and save to file
     Map flight = Flight(id: id).toMap();

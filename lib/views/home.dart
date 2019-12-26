@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/database/internet.dart';
+import 'package:fluttair/database/map.dart';
 
 /// Splash screen
 class HomeView extends StatefulWidget {
@@ -28,11 +29,13 @@ class HomeViewState extends State<HomeView> {
     FlightProvider fltProvider = FlightProvider();
     WeatherProvider weatherProvider = WeatherProvider();
     NotamsProvider notamsProvider = NotamsProvider();
+    MapProvider mapProvider = MapProvider();
     try {
       dbProvider.database;
       fltProvider.flightPath;
       weatherProvider.weatherFile;
       notamsProvider.notamsFile;
+      mapProvider.mapPath;
       setState(() {
         _message = Text('Database sucessfully loaded',
             style: TextStyle(color: Colors.green));
