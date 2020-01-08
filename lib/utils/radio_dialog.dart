@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
+/// Dialog with radio tiles template
 class RadioDialog extends StatefulWidget {
   final int initial;
-  final Future<List<dynamic>> choiceList;
+  final Future<List<dynamic>> data;
   final void Function(int) onChoiceChanged;
   final String title;
 
   RadioDialog(
       {Key key,
       this.initial,
-      this.choiceList,
+      this.data,
       this.onChoiceChanged,
       this.title})
       : super(key: key);
@@ -20,13 +21,13 @@ class RadioDialog extends StatefulWidget {
 
 class RadioDialogState extends State<RadioDialog> {
   bool _visible;
-  int _choice;
+  int _id;
 
   @override
   void initState() {
     super.initState();
     _visible = false;
-    _choice = widget.initial;
+    _id = widget.initial;
   }
 
   @override
@@ -34,7 +35,7 @@ class RadioDialogState extends State<RadioDialog> {
     return AlertDialog(
       title: Text(widget.title),
       content: FutureBuilder(
-          future: widget.choiceList,
+          future: widget.data,
           builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
             if (snapshot.hasData && snapshot.data.length != 0) {
               return ListView.builder(
@@ -43,11 +44,11 @@ class RadioDialogState extends State<RadioDialog> {
                   itemBuilder: (BuildContext context, int i) {
                     return RadioListTile(
                         title: Text(snapshot.data[i].name),
-                        value: i,
-                        groupValue: _choice ?? snapshot.data.length + 1,
+                        value: snapshot.data[i].id as int,
+                        groupValue: _id ?? snapshot.data.length + 1,
                         onChanged: (int value) {
                           _visible = true;
-                          setState(() => _choice = value);
+                          setState(() => _id = value);
                         });
                   });
             } else if (snapshot.hasError) {
@@ -64,7 +65,7 @@ class RadioDialogState extends State<RadioDialog> {
                 child: Text("Set"),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  widget.onChoiceChanged(_choice);
+                  widget.onChoiceChanged(_id);
                   setState(() {});
                 })),
         FlatButton(

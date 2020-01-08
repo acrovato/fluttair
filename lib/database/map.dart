@@ -97,20 +97,26 @@ class MapProvider {
   Future<List<MyMap>> getMaps() async {
     // Get all maps
     List<FileSystemEntity> entries = _mapPath.listSync();
-    List<MapEntry<String, File>> maps = [];
+    List<Map<String, dynamic>> maps = [];
     // -shm/-wal get appended to .mbtiles by flutter_map, so we check that we open .mbtiles
-    for (var entry in entries) {
+    for (int i = 0; i < entries.length; ++i) {
       String filename =
-          entry.path.split(Platform.pathSeparator).last.split('.')[0];
-      if (entry.path.split(Platform.pathSeparator).last.split('.')[1] ==
+          entries[i].path.split(Platform.pathSeparator).last.split('.')[0];
+      if (entries[i].path.split(Platform.pathSeparator).last.split('.')[1] ==
           'mbtiles') {
         String name =
             _generateName(filename.split('_')[0], filename.split('_')[1]);
-        maps.add(MapEntry<String, File>(name, entry));
+        maps.add({'id': i, 'name': name, 'file': entries[i]});
       }
     }
     return List.generate(maps.length, (i) {
       return MyMap.fromMap(maps[i]);
     });
+  }
+
+  Future<MyMap> getMap(int id) async {
+    // Get a map
+    List<MyMap> maps = await getMaps();
+    return maps[id];
   }
 }

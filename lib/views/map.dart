@@ -5,28 +5,31 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
+import 'package:wakelock/wakelock.dart';
 
 import 'package:fluttair/database/map.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/model/map.dart';
 import 'package:fluttair/utils/radio_dialog.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
 
 class MapView extends StatefulWidget {
-  MapView({Key key}) : super(key: key);
+  final int flightId;
+
+  MapView({Key key, this.flightId}) : super(key: key);
 
   @override
   MapViewState createState() => MapViewState();
 }
 
-// TODO use database id instead of _flight/_mapChoice
 // TODO check and understand how the different maps are loaded and persist in memory
 // TODO keep screen awake unless power button + ongoing notification
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
-  int _mapChoice;
+  int _mapId;
 
   // Location
   Location _locationService = Location();
@@ -43,17 +46,20 @@ class MapViewState extends State<MapView> {
 
   // Flight
   FlightProvider _flightProvider = FlightProvider();
-  int _flightChoice;
+  int _flightId;
   bool _recording = false;
 
   @override
   void initState() {
+    Wakelock.enable(); // keep the screen on
     _onMapChanged(0); // TODO should come from settings
+    _flightId = widget.flightId;
     _initLocation();
     super.initState();
   }
 
   void dispose() {
+    Wakelock.disable();
     if (_locationSubscription != null) _locationSubscription.cancel();
     super.dispose();
   }
@@ -99,28 +105,28 @@ class MapViewState extends State<MapView> {
     showDialog(
         context: context,
         builder: (BuildContext context) => RadioDialog(
-            initial: _flightChoice,
-            choiceList: _flightProvider.getFlights(),
+            initial: _flightId,
+            data: _flightProvider.getFlights(),
             onChoiceChanged: _onFlightChanged,
             title: 'Set flight'));
   }
 
-  void _onFlightChanged(int choice) async {
-    setState(() => _flightChoice = choice);
+  void _onFlightChanged(int id) async {
+    setState(() => _flightId = id);
   }
 
   void _setMap() {
     showDialog(
         context: context,
         builder: (BuildContext context) => RadioDialog(
-            initial: _mapChoice,
-            choiceList: _mapProvider.getMaps(),
+            initial: _mapId,
+            data: _mapProvider.getMaps(),
             onChoiceChanged: _onMapChanged,
             title: 'Set map'));
   }
 
-  void _onMapChanged(int choice) async {
-    setState(() => _mapChoice = choice);
+  void _onMapChanged(int id) async {
+    setState(() => _mapId = id);
   }
 
   void _centerMap() {
@@ -131,7 +137,7 @@ class MapViewState extends State<MapView> {
   }
 
   List<Marker> _getPositMark() {
-    List<Marker> posit = List(0);
+    List<Marker> posit = [];
     if (_currentLocation != null) {
       posit.add(Marker(
         point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
@@ -150,8 +156,8 @@ class MapViewState extends State<MapView> {
 
   List<Marker> _getRouteMark() {
     Flight flight;
-    _flightChoice != null
-        ? flight = _flightProvider.getFlightsSync()[_flightChoice]
+    _flightId != null
+        ? flight = _flightProvider.getFlight(_flightId)
         : flight = null;
     List<Marker> route = [];
     if (flight != null) {
@@ -171,8 +177,8 @@ class MapViewState extends State<MapView> {
 
   Polyline _getRoute() {
     Flight flight;
-    _flightChoice != null
-        ? flight = _flightProvider.getFlightsSync()[_flightChoice]
+    _flightId != null
+        ? flight = _flightProvider.getFlight(_flightId)
         : flight = null;
     return Polyline(
         points: flight?.steerpoints ?? [],
@@ -200,18 +206,11 @@ class MapViewState extends State<MapView> {
               : Icon(Icons.radio_button_checked),
           color: Colors.redAccent,
           splashColor: Colors.redAccent,
-          onPressed: () {
+          onPressed: () async {
+            if (_flightId == null)
+              _flightId = await _flightProvider.createFlight();
             setState(() {
               if (!_recording) {
-                if (_flightChoice == null) {
-                  List<Flight> flights = _flightProvider.getFlightsSync();
-                  List<int> ids = List.generate(flights.length, (i) {
-                    return flights[i].id;
-                  });
-                  int newId = ids.fold(0, math.max) + 1;
-                  _flightProvider.createFlight(newId);
-                  //_flightChoice = 0; // TODO access right flight
-                }
                 _recording = true;
               } else
                 _recording = false;
@@ -256,9 +255,9 @@ class MapViewState extends State<MapView> {
               child: Stack(
             children: <Widget>[
               FutureBuilder(
-                  future: _mapProvider.getMaps(),
+                  future: _mapProvider.getMap(_mapId),
                   builder:
-                      (BuildContext context, AsyncSnapshot<List> snapshot) {
+                      (BuildContext context, AsyncSnapshot<MyMap> snapshot) {
                     if (snapshot.hasData) {
                       return FlutterMap(
                         mapController: _mapController,
@@ -272,7 +271,7 @@ class MapViewState extends State<MapView> {
                           TileLayerOptions(
                               tms: true,
                               tileProvider: MBTilesImageProvider.fromFile(
-                                  snapshot.data[_mapChoice].file)),
+                                  snapshot.data.file)),
                           MarkerLayerOptions(markers: _getPositMark()),
                           MarkerLayerOptions(markers: _getRouteMark()),
                           PolylineLayerOptions(

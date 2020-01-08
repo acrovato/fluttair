@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'package:fluttair/database/flight.dart';
@@ -148,14 +147,7 @@ class _PlannedTabState extends State<_PlannedTab> {
                     child: FloatingActionButton(
                         child: Icon(Icons.add),
                         onPressed: () {
-                          int newId = 0;
-                          if (snapshot.hasData) {
-                            List<int> ids = List.generate(snapshot.data.length, (i) {
-                              return snapshot.data[i].id;
-                            });
-                            newId = ids.fold(0, max) + 1;
-                          }
-                          _flightProvider.createFlight(newId);
+                          _flightProvider.createFlight();
                           setState(() {});
                         })))
           ]);
