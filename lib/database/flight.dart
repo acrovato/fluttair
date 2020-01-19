@@ -6,7 +6,7 @@ import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 
-import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/model/flight.dart';
 
 /// Flight database
 class FlightProvider {

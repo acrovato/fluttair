@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/database/internet.dart';
@@ -20,11 +21,12 @@ class HomeViewState extends State<HomeView> {
   @override
   void initState() {
     _message = Text('Loading data...');
-    checkData();
+    _initPrefs();
+    _checkData();
     super.initState();
   }
 
-  checkData() {
+  void _checkData() {
     DatabaseProvider dbProvider = DatabaseProvider();
     FlightProvider fltProvider = FlightProvider();
     WeatherProvider weatherProvider = WeatherProvider();
@@ -45,9 +47,20 @@ class HomeViewState extends State<HomeView> {
     } on FileSystemException catch (e) {
       setState(() {
         _message = Text('Error while loading database\n' + e.toString(),
-            style: TextStyle(color: Colors.green));
+            style: TextStyle(color: Colors.red));
       });
     }
+  }
+
+  void _initPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('dark_mode') == null) prefs.setBool('dark_mode', false);
+    if (prefs.getInt('default_map') == null) prefs.setInt('default_map', 0);
+    if (prefs.getInt('gps_refresh') == null) prefs.setInt('gps_refresh', 10);
+    if (prefs.getString('map_units_speed') == null)
+      prefs.setString('map_units_speed', 'kts');
+    if (prefs.getString('map_units_altitude') == null)
+      prefs.setString('map_units_altitude', 'ft');
   }
 
   @override

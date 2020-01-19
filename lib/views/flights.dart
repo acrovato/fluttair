@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:fluttair/database/flight.dart';
-import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/views/flight.dart';
 
 import 'sidebar.dart';
@@ -79,9 +79,7 @@ class _PlannedTabState extends State<_PlannedTab> {
   }
 
   Widget flightTile(BuildContext context, Flight flight) {
-    // TODO not entirely sure of what I am doing here...
     List<PopupMenuItem<int>> _actions = List(2);
-
     _actions[0] = PopupMenuItem<int>(child: Text('Delete'), value: 0);
     _actions[1] = PopupMenuItem<int>(child: Text('Archive'), value: 1);
 
@@ -110,10 +108,10 @@ class _PlannedTabState extends State<_PlannedTab> {
                 onSelected: _choiceAction,
                 itemBuilder: (BuildContext context) => _actions),
             onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => FlightView(flight: flight)));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => FlightView(flight: flight)));
             }));
   }
 

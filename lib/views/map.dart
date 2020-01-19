@@ -6,10 +6,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fluttair/database/map.dart';
 import 'package:fluttair/database/flight.dart';
-import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/model/map.dart';
 import 'package:fluttair/utils/radio_dialog.dart';
 import 'package:fluttair/utils/snackbar.dart';
@@ -25,11 +26,11 @@ class MapView extends StatefulWidget {
 }
 
 // TODO check and understand how the different maps are loaded and persist in memory
-// TODO keep screen awake unless power button + ongoing notification
+// TODO ongoing notification for tracking
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
-  int _mapId;
+  int _mapId = 0;
 
   // Location
   Location _locationService = Location();
@@ -41,8 +42,7 @@ class MapViewState extends State<MapView> {
   bool _autoCentering = false;
 
   // Settings
-  int _refreshRate = 5;
-  LatLng _homeBase = LatLng(50.85, 4.35);
+  LatLng _homeBase = LatLng(50.85, 4.35); // TODO
 
   // Flight
   FlightProvider _flightProvider = FlightProvider();
@@ -52,7 +52,7 @@ class MapViewState extends State<MapView> {
   @override
   void initState() {
     Wakelock.enable(); // keep the screen on
-    _onMapChanged(0); // TODO should come from settings
+    initPref();
     _flightId = widget.flightId;
     _initLocation();
     super.initState();
@@ -64,9 +64,17 @@ class MapViewState extends State<MapView> {
     super.dispose();
   }
 
+  void initPref() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    _mapId = pref.getInt('default_map');
+    setState(() {});
+  }
+
   void _initLocation() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
     await _locationService.changeSettings(
-        accuracy: LocationAccuracy.NAVIGATION, interval: _refreshRate * 1000);
+        accuracy: LocationAccuracy.NAVIGATION,
+        interval: pref.getInt('gps_refresh') * 1000);
 
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
@@ -224,16 +232,25 @@ class MapViewState extends State<MapView> {
     );
   }
 
-  Row _buildRow() {
+  Row _buildRow(SharedPreferences prefs) {
+    List<double> factor = List(2);
     List<String> data = List(3);
+    if (prefs.getString('map_units_speed') == 'kts')
+      factor[0] = 1.944;
+    else if (prefs.getString('map_units_speed') == 'km/h') factor[0] = 3.6;
+    if (prefs.getString('map_units_altitude') == 'ft')
+      factor[1] = 3.281;
+    else if (prefs.getString('map_units_altitude') == 'm') factor[1] = 1.0;
     if (_currentLocation != null) {
-      data[0] = (_currentLocation.speed * 1.944).round().toString() + ' kts';
+      data[0] = (_currentLocation.speed * factor[0]).round().toString() +
+          ' ${prefs.getString('map_units_speed')}';
       data[1] = (_currentLocation.heading).round().toString() + ' °';
-      data[2] = (_currentLocation.altitude * 3.281).round().toString() + ' ft';
+      data[2] = (_currentLocation.altitude * factor[0]).round().toString() +
+          ' ${prefs.getString('map_units_altitude')}';
     } else {
-      data[0] = '--- kts';
+      data[0] = '--- ${prefs.getString('map_units_speed')}';
       data[1] = '--- °';
-      data[2] = '--- ft';
+      data[2] = '--- ${prefs.getString('map_units_altitude')}';
     }
     return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -325,7 +342,15 @@ class MapViewState extends State<MapView> {
               )
             ],
           )),
-          _buildRow()
+          FutureBuilder(
+              future: SharedPreferences.getInstance(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<SharedPreferences> snapshot) {
+                if (snapshot.hasData)
+                  return _buildRow(snapshot.data);
+                else
+                  return Container();
+              })
         ])));
   }
 }

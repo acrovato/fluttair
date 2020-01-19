@@ -4,7 +4,7 @@ import 'package:latlong/latlong.dart';
 
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
-import 'package:fluttair/model/flights.dart';
+import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'package:fluttair/views/map.dart';
 
