@@ -148,18 +148,30 @@ class MapViewState extends State<MapView> {
     List<Marker> posit = [];
     if (_currentLocation != null) {
       posit.add(Marker(
-        point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
-        builder: (context) => Container(
-            child: Transform.rotate(
-                angle: _currentLocation.heading * math.pi / 180.0,
-                child: Icon(
-                  Icons.airplanemode_active,
-                  color: Colors.indigo,
-                  size: 60,
-                ))),
-      ));
+          width: 60,
+          height: 60,
+          point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
+          builder: (context) => LayoutBuilder(
+              builder: (context, constraint) => Transform.rotate(
+                  angle: _currentLocation.heading * math.pi / 180.0,
+                  child: Icon(Icons.airplanemode_active,
+                      color: Colors.indigo,
+                      size: constraint.biggest.height)))));
     }
     return posit;
+  }
+
+  Polyline _getVector() {
+    List<LatLng> vector = [];
+    if (_currentLocation != null) {
+      LatLng p0 = LatLng(_currentLocation.latitude, _currentLocation.longitude);
+      LatLng p1 = Distance().offset(p0, _currentLocation.speed * 5.0 * 60.0,
+          _currentLocation.heading); // 5-minutes distance
+      vector.add(p0);
+      vector.add(p1);
+    }
+    return Polyline(
+        points: vector, strokeWidth: 4.0, color: Colors.green, isDotted: true);
   }
 
   List<Marker> _getRouteMark() {
@@ -289,11 +301,10 @@ class MapViewState extends State<MapView> {
                               tms: true,
                               tileProvider: MBTilesImageProvider.fromFile(
                                   snapshot.data.file)),
-                          MarkerLayerOptions(markers: _getPositMark()),
                           MarkerLayerOptions(markers: _getRouteMark()),
-                          PolylineLayerOptions(
-                            polylines: [_getRoute()],
-                          )
+                          PolylineLayerOptions(polylines: [_getRoute()]),
+                          MarkerLayerOptions(markers: _getPositMark()),
+                          PolylineLayerOptions(polylines: [_getVector()])
                         ],
                       );
                     } else if (snapshot.hasError)

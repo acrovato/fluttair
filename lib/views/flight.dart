@@ -17,8 +17,6 @@ class FlightView extends StatefulWidget {
   FlightViewState createState() => FlightViewState();
 }
 
-// TODO extensive testing required!!!
-// TODO refactor?
 class FlightViewState extends State<FlightView> {
   var _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlightProvider _flightProvider = FlightProvider();
@@ -26,6 +24,7 @@ class FlightViewState extends State<FlightView> {
   TextEditingController departureController = TextEditingController();
   TextEditingController arrivalController = TextEditingController();
   TextEditingController steerController = TextEditingController();
+  List<FocusNode> focuses = [FocusNode(), FocusNode(), FocusNode()];
 
   @override
   void initState() {
@@ -41,6 +40,7 @@ class FlightViewState extends State<FlightView> {
     departureController.dispose();
     arrivalController.dispose();
     steerController.dispose();
+    for (var focus in focuses) focus.dispose();
     super.dispose();
   }
 
@@ -48,14 +48,19 @@ class FlightViewState extends State<FlightView> {
     return Padding(
         padding: EdgeInsets.all(10.0),
         child: TextField(
-            focusNode: FocusNode(),
-            autofocus: false,
+            focusNode: focuses[field],
+            autofocus: field == 0 ? true : false,
             textCapitalization: field != 0
                 ? TextCapitalization.characters
                 : TextCapitalization.none,
             controller: controller,
-            onSubmitted: (value) => _setField(controller.text, field),
-            // TODO: give focus to next field?
+            onSubmitted: (value) {
+              _setField(controller.text, field);
+              if (field < 2)
+                FocusScope.of(context).requestFocus(focuses[field + 1]);
+            },
+            textInputAction:
+                field != 2 ? TextInputAction.next : TextInputAction.done,
             decoration: InputDecoration(
               labelText: label,
               contentPadding: EdgeInsets.all(12.0),

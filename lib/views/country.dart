@@ -115,7 +115,7 @@ class _AirportsTabState extends State<_AirportsTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'airports'),
+      SearchBar(controller: searchController, text: 'airports'),
       Expanded(
           child: FutureBuilder(
               future: airports,
@@ -203,7 +203,7 @@ class _AirspacesTabState extends State<_AirspacesTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'airspaces'),
+      SearchBar(controller: searchController, text: 'airspaces'),
       Expanded(
           child: FutureBuilder(
               future: airspaces,
@@ -291,7 +291,7 @@ class _NavaidsTabState extends State<_NavaidsTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'navaids'),
+      SearchBar(controller: searchController, text: 'navaids'),
       Expanded(
           child: FutureBuilder(
               future: navaids,
