@@ -26,13 +26,18 @@ class MyDialog extends StatelessWidget {
         actionText == null
             ? null
             : FlatButton(
-                child: Text(actionText),
+                child: Text(actionText,
+                    style: TextStyle(
+                        color: Theme.of(context).accentColor,
+                        fontWeight: FontWeight.bold)),
                 onPressed: () {
                   Navigator.of(context).pop();
                   if (action != null) action();
                 }),
         FlatButton(
-            child: Text(closeText),
+            child: Text(closeText,
+                style:
+                    TextStyle(color: Theme.of(context).textTheme.caption.color)),
             onPressed: () => Navigator.of(context).pop())
       ],
     );

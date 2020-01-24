@@ -6,8 +6,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:wakelock/wakelock.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/map.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flight.dart';
@@ -30,7 +30,7 @@ class MapView extends StatefulWidget {
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
-  int _mapId = 0;
+  int _mapId = Preferences.getDefaultMap();
 
   // Location
   Location _locationService = Location();
@@ -52,7 +52,6 @@ class MapViewState extends State<MapView> {
   @override
   void initState() {
     Wakelock.enable(); // keep the screen on
-    initPref();
     _flightId = widget.flightId;
     _initLocation();
     super.initState();
@@ -64,17 +63,10 @@ class MapViewState extends State<MapView> {
     super.dispose();
   }
 
-  void initPref() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    _mapId = pref.getInt('default_map');
-    setState(() {});
-  }
-
   void _initLocation() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
     await _locationService.changeSettings(
         accuracy: LocationAccuracy.NAVIGATION,
-        interval: pref.getInt('gps_refresh') * 1000);
+        interval: Preferences.getGpsRefreshRate() * 1000);
 
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
@@ -244,25 +236,22 @@ class MapViewState extends State<MapView> {
     );
   }
 
-  Row _buildRow(SharedPreferences prefs) {
-    List<double> factor = List(2);
+  Row _gpsRow() {
     List<String> data = List(3);
-    if (prefs.getString('map_units_speed') == 'kts')
-      factor[0] = 1.944;
-    else if (prefs.getString('map_units_speed') == 'km/h') factor[0] = 3.6;
-    if (prefs.getString('map_units_altitude') == 'ft')
-      factor[1] = 3.281;
-    else if (prefs.getString('map_units_altitude') == 'm') factor[1] = 1.0;
     if (_currentLocation != null) {
-      data[0] = (_currentLocation.speed * factor[0]).round().toString() +
-          ' ${prefs.getString('map_units_speed')}';
+      data[0] = (_currentLocation.speed * Preferences.getSpeedFactor())
+              .round()
+              .toString() +
+          ' ${Preferences.getSpeedUnit()}';
       data[1] = (_currentLocation.heading).round().toString() + ' °';
-      data[2] = (_currentLocation.altitude * factor[0]).round().toString() +
-          ' ${prefs.getString('map_units_altitude')}';
+      data[2] = (_currentLocation.altitude * Preferences.getAltitudeFactor())
+              .round()
+              .toString() +
+          ' ${Preferences.getAltitudeUnit()}';
     } else {
-      data[0] = '--- ${prefs.getString('map_units_speed')}';
+      data[0] = '--- ${Preferences.getSpeedUnit()}';
       data[1] = '--- °';
-      data[2] = '--- ${prefs.getString('map_units_altitude')}';
+      data[2] = '--- ${Preferences.getAltitudeUnit()}';
     }
     return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -353,15 +342,7 @@ class MapViewState extends State<MapView> {
               )
             ],
           )),
-          FutureBuilder(
-              future: SharedPreferences.getInstance(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<SharedPreferences> snapshot) {
-                if (snapshot.hasData)
-                  return _buildRow(snapshot.data);
-                else
-                  return Container();
-              })
+          _gpsRow()
         ])));
   }
 }
