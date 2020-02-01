@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/map.dart';
@@ -17,16 +18,16 @@ import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
 
 class MapView extends StatefulWidget {
-  final int flightId;
+  final Flight flight;
 
-  MapView({Key key, this.flightId}) : super(key: key);
+  MapView({Key key, this.flight}) : super(key: key);
 
   @override
   MapViewState createState() => MapViewState();
 }
 
 // TODO check and understand how the different maps are loaded and persist in memory
-// TODO ongoing notification for tracking
+// TODO ongoing notif: init outside and prevent from closing location stream + check screen off
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
@@ -46,14 +47,23 @@ class MapViewState extends State<MapView> {
 
   // Flight
   FlightProvider _flightProvider = FlightProvider();
-  int _flightId;
+  Flight _flight;
   bool _recording = false;
+
+  // Notification
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     Wakelock.enable(); // keep the screen on
-    _flightId = widget.flightId;
+    _flight = widget.flight;
     _initLocation();
+    // Notifications
+    InitializationSettings initializationSettings = new InitializationSettings(
+        AndroidInitializationSettings('@mipmap/ic_launcher'),
+        IOSInitializationSettings());
+    _flutterLocalNotificationsPlugin.initialize(initializationSettings);
     super.initState();
   }
 
@@ -96,6 +106,9 @@ class MapViewState extends State<MapView> {
       if (mounted)
         setState(() {
           _currentLocation = result;
+          if (_recording)
+            _flight.record(_currentLocation.latitude,
+                _currentLocation.longitude, _currentLocation.altitude);
           if (_autoCentering) _centerMap();
         });
     });
@@ -105,14 +118,14 @@ class MapViewState extends State<MapView> {
     showDialog(
         context: context,
         builder: (BuildContext context) => RadioDialog(
-            initial: _flightId,
+            initial: _flight?.id ?? 0,
             data: _flightProvider.getFlights(),
             onChoiceChanged: _onFlightChanged,
             title: 'Set flight'));
   }
 
   void _onFlightChanged(int id) async {
-    setState(() => _flightId = id);
+    setState(() => _flight = _flightProvider.getFlight(id));
   }
 
   void _setMap() {
@@ -127,6 +140,35 @@ class MapViewState extends State<MapView> {
 
   void _onMapChanged(int id) async {
     setState(() => _mapId = id);
+  }
+
+  Future<void> _startRecord() async {
+    // Create flight if needed
+    if (_flight == null) {
+      int id = await _flightProvider.createFlight();
+      _flight = _flightProvider.getFlight(id);
+    }
+    // Create ongoing notification
+    AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails('id', 'name', 'desc',
+            importance: Importance.Max,
+            priority: Priority.High,
+            ongoing: true,
+            autoCancel: false);
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, IOSNotificationDetails());
+    await _flutterLocalNotificationsPlugin.show(
+        0, 'Fluttair', 'Recording flight', platformChannelSpecifics);
+    // Start recording
+    _recording = true;
+  }
+
+  Future<void> _stopRecord() async {
+    // Cancel notification
+    await _flutterLocalNotificationsPlugin.cancel(0);
+    // Stop recording
+    _recording = false;
+    _flightProvider.saveFlight(_flight);
   }
 
   void _centerMap() {
@@ -167,16 +209,12 @@ class MapViewState extends State<MapView> {
   }
 
   List<Marker> _getRouteMark() {
-    Flight flight;
-    _flightId != null
-        ? flight = _flightProvider.getFlight(_flightId)
-        : flight = null;
     List<Marker> route = [];
-    if (flight != null) {
-      route.length = flight.steerpoints.length;
-      for (int i = 0; i < flight.steerpoints.length; ++i) {
+    if (_flight != null) {
+      route.length = _flight.steerpoints.length;
+      for (int i = 0; i < _flight.steerpoints.length; ++i) {
         route[i] = Marker(
-            point: flight.steerpoints[i],
+            point: _flight.steerpoints[i],
             builder: (context) => Icon(
                   Icons.radio_button_unchecked,
                   color: Colors.purple,
@@ -188,12 +226,8 @@ class MapViewState extends State<MapView> {
   }
 
   Polyline _getRoute() {
-    Flight flight;
-    _flightId != null
-        ? flight = _flightProvider.getFlight(_flightId)
-        : flight = null;
     return Polyline(
-        points: flight?.steerpoints ?? [],
+        points: _flight?.steerpoints ?? [],
         strokeWidth: 4.0,
         color: Colors.purple);
   }
@@ -219,14 +253,11 @@ class MapViewState extends State<MapView> {
           color: Colors.redAccent,
           splashColor: Colors.redAccent,
           onPressed: () async {
-            if (_flightId == null)
-              _flightId = await _flightProvider.createFlight();
-            setState(() {
-              if (!_recording) {
-                _recording = true;
-              } else
-                _recording = false;
-            });
+            if (!_recording)
+              _startRecord();
+            else
+              _stopRecord();
+            setState(() {});
           },
         ),
         PopupMenuButton<int>(

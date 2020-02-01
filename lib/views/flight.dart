@@ -20,25 +20,25 @@ class FlightView extends StatefulWidget {
 class FlightViewState extends State<FlightView> {
   var _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlightProvider _flightProvider = FlightProvider();
-  TextEditingController nameController = TextEditingController();
-  TextEditingController departureController = TextEditingController();
-  TextEditingController arrivalController = TextEditingController();
+  List<TextEditingController> controllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController()
+  ];
   TextEditingController steerController = TextEditingController();
   List<FocusNode> focuses = [FocusNode(), FocusNode(), FocusNode()];
 
   @override
   void initState() {
-    nameController.text = widget.flight.name;
-    departureController.text = widget.flight.departure;
-    arrivalController.text = widget.flight.arrival;
+    controllers[0].text = widget.flight.name;
+    controllers[1].text = widget.flight.departure;
+    controllers[2].text = widget.flight.arrival;
     super.initState();
   }
 
   @override
   void dispose() {
-    nameController.dispose();
-    departureController.dispose();
-    arrivalController.dispose();
+    for (var control in controllers) control.dispose();
     steerController.dispose();
     for (var focus in focuses) focus.dispose();
     super.dispose();
@@ -63,6 +63,7 @@ class FlightViewState extends State<FlightView> {
                 field != 2 ? TextInputAction.next : TextInputAction.done,
             decoration: InputDecoration(
               labelText: label,
+              hintText: field == 0 ? label : 'ICAO',
               contentPadding: EdgeInsets.all(12.0),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(20.0)),
@@ -152,9 +153,9 @@ class FlightViewState extends State<FlightView> {
 
   void _saveFlight() {
     // Safety set (in case the user did not use the keyboard action button) then save
-    widget.flight.name = nameController.text;
-    widget.flight.departure = departureController.text;
-    widget.flight.arrival = arrivalController.text;
+    widget.flight.name = controllers[0].text;
+    widget.flight.departure = controllers[1].text;
+    widget.flight.arrival = controllers[2].text;
     _flightProvider.saveFlight(widget.flight);
   }
 
@@ -182,12 +183,11 @@ class FlightViewState extends State<FlightView> {
               ListTile(
                   title: Text('Details',
                       style: TextStyle(fontWeight: FontWeight.bold))),
-              _inputBar1(nameController, 'Flight name', 0),
+              _inputBar1(controllers[0], 'Flight name', 0),
               Row(children: <Widget>[
-                Expanded(
-                    child: _inputBar1(departureController, 'Departure', 1)),
+                Expanded(child: _inputBar1(controllers[1], 'Departure', 1)),
                 Icon(Icons.arrow_right),
-                Expanded(child: _inputBar1(arrivalController, 'Arrival', 2))
+                Expanded(child: _inputBar1(controllers[2], 'Arrival', 2))
               ])
             ])),
             Card(
@@ -222,7 +222,7 @@ class FlightViewState extends State<FlightView> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    MapView(flightId: widget.flight.id)));
+                                    MapView(flight: widget.flight)));
                       })))
         ]));
   }

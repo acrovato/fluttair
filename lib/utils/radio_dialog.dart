@@ -8,11 +8,7 @@ class RadioDialog extends StatefulWidget {
   final String title;
 
   RadioDialog(
-      {Key key,
-      this.initial,
-      this.data,
-      this.onChoiceChanged,
-      this.title})
+      {Key key, this.initial, this.data, this.onChoiceChanged, this.title})
       : super(key: key);
 
   @override
@@ -62,14 +58,20 @@ class RadioDialogState extends State<RadioDialog> {
         Visibility(
             visible: _visible,
             child: FlatButton(
-                child: Text("Set"),
+                child: Text('Set',
+                    style: TextStyle(
+                        color: Theme.of(context).accentColor,
+                        fontWeight: FontWeight.bold)),
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onChoiceChanged(_id);
                   setState(() {});
                 })),
         FlatButton(
-            child: Text("Cancel"), onPressed: () => Navigator.of(context).pop())
+            child: Text('Cancel',
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.caption.color)),
+            onPressed: () => Navigator.of(context).pop())
       ],
     );
   }
