@@ -171,7 +171,6 @@ class _AirspacesTabState extends State<_AirspacesTab> {
     super.dispose();
   }
 
-  // TODO: consider to query db to return only the needed list (less code, complexity handle by db, faster?)
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
       return airspaceTile(context, data, i);

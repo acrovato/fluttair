@@ -27,7 +27,7 @@ class MapView extends StatefulWidget {
 }
 
 // TODO check and understand how the different maps are loaded and persist in memory
-// TODO ongoing notif: init outside and prevent from closing location stream + check screen off
+// TODO ongoing notif: init outside and prevent from closing location stream
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
@@ -248,7 +248,7 @@ class MapViewState extends State<MapView> {
       actions: <Widget>[
         IconButton(
           icon: _recording
-              ? Icon(Icons.radio_button_unchecked)
+              ? Icon(Icons.stop)
               : Icon(Icons.radio_button_checked),
           color: Colors.redAccent,
           splashColor: Colors.redAccent,

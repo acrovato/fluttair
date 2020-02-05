@@ -1,23 +1,28 @@
 import 'package:fluttair/model/airport.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 
+import 'package:fluttair/database/preferences.dart';
+import 'package:fluttair/database/map.dart';
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flight.dart';
+import 'package:fluttair/model/map.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'package:fluttair/views/map.dart';
 
-class FlightView extends StatefulWidget {
+/// Planned flight
+class FlightPlanView extends StatefulWidget {
   final Flight flight;
 
-  FlightView({Key key, @required this.flight}) : super(key: key);
+  FlightPlanView({Key key, @required this.flight}) : super(key: key);
 
   @override
-  FlightViewState createState() => FlightViewState();
+  FlightPlanViewState createState() => FlightPlanViewState();
 }
 
-class FlightViewState extends State<FlightView> {
+class FlightPlanViewState extends State<FlightPlanView> {
   var _scaffoldKey = GlobalKey<ScaffoldState>();
   final FlightProvider _flightProvider = FlightProvider();
   List<TextEditingController> controllers = [
@@ -224,6 +229,114 @@ class FlightViewState extends State<FlightView> {
                                 builder: (context) =>
                                     MapView(flight: widget.flight)));
                       })))
+        ]));
+  }
+}
+
+/// Archived flight
+class FlightArchiveView extends StatefulWidget {
+  final Flight flight;
+
+  FlightArchiveView({Key key, @required this.flight}) : super(key: key);
+
+  @override
+  FlightArchiveViewState createState() => FlightArchiveViewState();
+}
+
+// TODO rework duplicate and allow more control
+class FlightArchiveViewState extends State<FlightArchiveView> {
+  MapProvider _mapProvider = MapProvider();
+  MapController _mapController = MapController();
+  int _mapId = Preferences.getDefaultMap(); //TODO
+  LatLng _homeBase = LatLng(50.85, 4.35); // TODO
+
+  //TODO duplicate
+  List<Marker> _getRouteMark() {
+    List<Marker> route = [];
+    route.length = widget.flight.steerpoints.length;
+    for (int i = 0; i < widget.flight.steerpoints.length; ++i) {
+      route[i] = Marker(
+          point: widget.flight.steerpoints[i],
+          builder: (context) => Icon(
+                Icons.radio_button_unchecked,
+                color: Colors.purple,
+                size: 30,
+              ));
+    }
+    return route;
+  }
+
+  // TODO duplicate
+  Polyline _getRoute() {
+    return Polyline(
+        points: widget.flight.steerpoints ?? [],
+        strokeWidth: 4.0,
+        color: Colors.purple);
+  }
+
+  Polyline _getTrack() {
+    List<LatLng> track = [];
+    for (var pos in widget.flight.track)
+      track.add(LatLng(pos.latitude, pos.longitude));
+    return Polyline(points: track, strokeWidth: 4.0, color: Colors.red);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(leading: BackButton(), title: Text('View flight')),
+        body: Column(children: <Widget>[
+          ListTile(
+              title: Row(children: <Widget>[
+                Text(widget.flight.departure,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).accentColor)),
+                Icon(Icons.arrow_right),
+                Text(widget.flight.arrival,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).accentColor))
+              ]),
+              subtitle: Text(widget.flight.name)),
+          Flexible(
+              child: Stack(children: <Widget>[
+            FutureBuilder(
+                future: _mapProvider.getMap(_mapId),
+                builder: (BuildContext context, AsyncSnapshot<MyMap> snapshot) {
+                  if (snapshot.hasData) {
+                    return FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        center: _homeBase,
+                        minZoom: 6.0,
+                        maxZoom: 12.0,
+                        zoom: 8.0,
+                      ),
+                      layers: [
+                        TileLayerOptions(
+                            tms: true,
+                            tileProvider: MBTilesImageProvider.fromFile(
+                                snapshot.data.file)),
+                        MarkerLayerOptions(markers: _getRouteMark()),
+                        PolylineLayerOptions(
+                            polylines: [_getRoute(), _getTrack()])
+                      ],
+                    );
+                  } else if (snapshot.hasError)
+                    return Container(
+                        child: Text(snapshot.error.toString()),
+                        margin: EdgeInsets.all(10));
+                  else
+                    return Center(child: CircularProgressIndicator());
+                }),
+            Align(
+              child: Text(
+                  '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
+                  style: TextStyle(color: Colors.black, fontSize: 12)),
+              alignment: Alignment.bottomLeft,
+            )
+          ]))
         ]));
   }
 }

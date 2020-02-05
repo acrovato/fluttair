@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:latlong/latlong.dart';
 import 'package:fluttair/model/position.dart';
 
-// TODO flight as abstract, planned and recorded flight as actual OR merged?
 class Flight {
   int id;
+  bool archived;
   String name;
   String departure;
   String arrival;
@@ -13,6 +13,7 @@ class Flight {
 
   Flight({@required this.id}) {
     name = DateTime.now().toString();
+    archived = false;
     departure = '';
     arrival = '';
     steerpoints = [];
@@ -21,6 +22,7 @@ class Flight {
 
   Flight.fromMap(Map<String, dynamic> map) {
     id = map['id'];
+    archived = map['archived'];
     name = map['name'];
     departure = map['departure'];
     arrival = map['arrival'];
@@ -53,6 +55,7 @@ class Flight {
     }
     return {
       'id': id,
+      'archived': archived,
       'name': name,
       'departure': departure,
       'arrival': arrival,
