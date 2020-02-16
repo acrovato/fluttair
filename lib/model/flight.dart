@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:latlong/latlong.dart';
 import 'package:fluttair/model/position.dart';
 
+// TODO maybe replace all LatLng by Position and code toMap/fromMap and toLatLng in Position?
 class Flight {
   int id;
   bool archived;
@@ -35,9 +36,10 @@ class Flight {
     List<double> latt = List.from(map['latt']);
     List<double> lngt = List.from(map['lngt']);
     List<double> altt = List.from(map['altt']);
+    List<String> timt = List.from(map['timt']);
     track = [];
     for (int i = 0; i < latt.length; ++i) {
-      track.add(Position(latt[i], lngt[i], altt[i]));
+      track.add(Position(latt[i], lngt[i], altt[i], DateTime.parse(timt[i])));
     }
   }
 
@@ -48,10 +50,12 @@ class Flight {
       lngs.add(sp.longitude);
     }
     List<double> latt = [], lngt = [], altt = [];
+    List<String> timt = [];
     for (var tp in track) {
       latt.add(tp.latitude);
       lngt.add(tp.longitude);
       altt.add(tp.altitude);
+      timt.add(tp.time.toString());
     }
     return {
       'id': id,
@@ -63,11 +67,12 @@ class Flight {
       'lngs': lngs,
       'latt': latt,
       'lngt': lngt,
-      'altt': altt
+      'altt': altt,
+      'timt': timt
     };
   }
 
   void record(double lat, double lng, double alt) {
-    track.add(Position(lat, lng, alt));
+    track.add(Position(lat, lng, alt, DateTime.now().toUtc()));
   }
 }

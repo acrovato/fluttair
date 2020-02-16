@@ -60,7 +60,7 @@ class MapViewState extends State<MapView> {
     _flight = widget.flight;
     _initLocation();
     // Notifications
-    InitializationSettings initializationSettings = new InitializationSettings(
+    InitializationSettings initializationSettings = InitializationSettings(
         AndroidInitializationSettings('@mipmap/ic_launcher'),
         IOSInitializationSettings());
     _flutterLocalNotificationsPlugin.initialize(initializationSettings);
@@ -103,14 +103,13 @@ class MapViewState extends State<MapView> {
     setState(() => _autoCentering = true);
     _locationSubscription =
         _locationService.onLocationChanged().listen((LocationData result) {
-      if (mounted)
-        setState(() {
-          _currentLocation = result;
-          if (_recording)
-            _flight.record(_currentLocation.latitude,
-                _currentLocation.longitude, _currentLocation.altitude);
-          if (_autoCentering) _centerMap();
-        });
+      setState(() {
+        _currentLocation = result;
+        if (_recording && _currentLocation.speed > 5) // do not record if speed is less than taxi speed (10kts)
+          _flight.record(_currentLocation.latitude, _currentLocation.longitude,
+              _currentLocation.altitude);
+        if (_autoCentering) _centerMap();
+      });
     });
   }
 
@@ -143,6 +142,8 @@ class MapViewState extends State<MapView> {
   }
 
   Future<void> _startRecord() async {
+    // Start recording
+    _recording = true;
     // Create flight if needed
     if (_flight == null) {
       int id = await _flightProvider.createFlight();
@@ -159,15 +160,13 @@ class MapViewState extends State<MapView> {
         androidPlatformChannelSpecifics, IOSNotificationDetails());
     await _flutterLocalNotificationsPlugin.show(
         0, 'Fluttair', 'Recording flight', platformChannelSpecifics);
-    // Start recording
-    _recording = true;
   }
 
   Future<void> _stopRecord() async {
-    // Cancel notification
-    await _flutterLocalNotificationsPlugin.cancel(0);
     // Stop recording
     _recording = false;
+    // Cancel notification
+    await _flutterLocalNotificationsPlugin.cancel(0);
     _flightProvider.saveFlight(_flight);
   }
 
@@ -247,9 +246,8 @@ class MapViewState extends State<MapView> {
       title: Text('Map'),
       actions: <Widget>[
         IconButton(
-          icon: _recording
-              ? Icon(Icons.stop)
-              : Icon(Icons.radio_button_checked),
+          icon:
+              _recording ? Icon(Icons.stop) : Icon(Icons.radio_button_checked),
           color: Colors.redAccent,
           splashColor: Colors.redAccent,
           onPressed: () async {

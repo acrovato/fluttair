@@ -2,6 +2,7 @@ import 'package:fluttair/model/airport.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+import 'package:charts_flutter/flutter.dart' as charts;
 
 import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/map.dart';
@@ -32,6 +33,7 @@ class FlightPlanViewState extends State<FlightPlanView> {
   ];
   TextEditingController steerController = TextEditingController();
   List<FocusNode> focuses = [FocusNode(), FocusNode(), FocusNode()];
+  FocusNode steerFocus = FocusNode();
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class FlightPlanViewState extends State<FlightPlanView> {
     for (var control in controllers) control.dispose();
     steerController.dispose();
     for (var focus in focuses) focus.dispose();
+    steerFocus.dispose();
     super.dispose();
   }
 
@@ -105,11 +108,11 @@ class FlightPlanViewState extends State<FlightPlanView> {
     }
   }
 
-  Widget _inputBar2(TextEditingController controller) {
+  Widget _inputBar2(TextEditingController controller, FocusNode node) {
     return Padding(
         padding: EdgeInsets.all(10.0),
         child: TextField(
-            focusNode: FocusNode(),
+            focusNode: node,
             autofocus: false,
             controller: controller,
             onSubmitted: (value) => _addSteer(controller.text),
@@ -212,7 +215,7 @@ class FlightPlanViewState extends State<FlightPlanView> {
                       );
                     }),
               ),
-              _inputBar2(steerController)
+              _inputBar2(steerController, steerFocus)
             ]))
           ]),
           Padding(
@@ -233,6 +236,7 @@ class FlightPlanViewState extends State<FlightPlanView> {
   }
 }
 
+// TODO maybe move to separate view
 /// Archived flight
 class FlightArchiveView extends StatefulWidget {
   final Flight flight;
@@ -249,6 +253,52 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
   MapController _mapController = MapController();
   int _mapId = Preferences.getDefaultMap(); //TODO
   LatLng _homeBase = LatLng(50.85, 4.35); // TODO
+
+  // TODO group with altitude?
+  int _getDistance() {
+    double dist = 0;
+    for (int i = 0; i < widget.flight.track.length - 1; ++i) {
+      LatLng p0 = LatLng(
+          widget.flight.track[i].latitude, widget.flight.track[i].longitude);
+      LatLng p1 = LatLng(widget.flight.track[i + 1].latitude,
+          widget.flight.track[i + 1].longitude);
+      dist += Distance().distance(p0, p1);
+    }
+    return (dist / 1852).ceil(); // in nm
+  }
+
+  int _getDuration() {
+    if (widget.flight.track.isNotEmpty)
+      return widget.flight.track.last.time
+          .difference(widget.flight.track.first.time)
+          .inMinutes;
+    else
+      return 0;
+  }
+
+  // TODO rework that shi**
+  List<charts.Series<MapEntry<double, int>, double>> _getAltitude() {
+    List<MapEntry<double, int>> alt = []; // TODO maybe use a class?
+    if (widget.flight.track.isNotEmpty) {
+      alt.add(
+          MapEntry(0, (widget.flight.track.first.altitude * 3.281).toInt()));
+      for (int i = 1; i < widget.flight.track.length; ++i) {
+        LatLng p0 = LatLng(widget.flight.track[i - 1].latitude,
+            widget.flight.track[i - 1].longitude);
+        LatLng p1 = LatLng(
+            widget.flight.track[i].latitude, widget.flight.track[i].longitude);
+        alt.add(MapEntry(alt[i - 1].key + Distance().distance(p0, p1) / 1852,
+            (widget.flight.track[i].altitude * 3.281).toInt()));
+      }
+    }
+    return [
+      charts.Series<MapEntry<double, int>, double>(
+          id: 'altitude',
+          domainFn: (MapEntry<double, int> data, _) => data.key,
+          measureFn: (MapEntry<double, int> data, _) => data.value,
+          data: alt) // TODO custom color, etc.
+    ];
+  }
 
   //TODO duplicate
   List<Marker> _getRouteMark() {
@@ -284,7 +334,8 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(leading: BackButton(), title: Text('View flight')),
+        appBar: AppBar(
+            leading: BackButton(), title: Text('View ${widget.flight.name}')),
         body: Column(children: <Widget>[
           ListTile(
               title: Row(children: <Widget>[
@@ -298,45 +349,49 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).accentColor))
               ]),
-              subtitle: Text(widget.flight.name)),
-          Flexible(
+              subtitle: Text('Distance: ${_getDistance()} nm\n'
+                  'Duration: ${_getDuration()} min')),
+          Expanded(
+              flex: 3,
               child: Stack(children: <Widget>[
-            FutureBuilder(
-                future: _mapProvider.getMap(_mapId),
-                builder: (BuildContext context, AsyncSnapshot<MyMap> snapshot) {
-                  if (snapshot.hasData) {
-                    return FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        center: _homeBase,
-                        minZoom: 6.0,
-                        maxZoom: 12.0,
-                        zoom: 8.0,
-                      ),
-                      layers: [
-                        TileLayerOptions(
-                            tms: true,
-                            tileProvider: MBTilesImageProvider.fromFile(
-                                snapshot.data.file)),
-                        MarkerLayerOptions(markers: _getRouteMark()),
-                        PolylineLayerOptions(
-                            polylines: [_getRoute(), _getTrack()])
-                      ],
-                    );
-                  } else if (snapshot.hasError)
-                    return Container(
-                        child: Text(snapshot.error.toString()),
-                        margin: EdgeInsets.all(10));
-                  else
-                    return Center(child: CircularProgressIndicator());
-                }),
-            Align(
-              child: Text(
-                  '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
-                  style: TextStyle(color: Colors.black, fontSize: 12)),
-              alignment: Alignment.bottomLeft,
-            )
-          ]))
+                FutureBuilder(
+                    future: _mapProvider.getMap(_mapId),
+                    builder:
+                        (BuildContext context, AsyncSnapshot<MyMap> snapshot) {
+                      if (snapshot.hasData) {
+                        return FlutterMap(
+                          mapController: _mapController,
+                          options: MapOptions(
+                            center: _homeBase,
+                            minZoom: 6.0,
+                            maxZoom: 12.0,
+                            zoom: 8.0,
+                          ),
+                          layers: [
+                            TileLayerOptions(
+                                tms: true,
+                                tileProvider: MBTilesImageProvider.fromFile(
+                                    snapshot.data.file)),
+                            MarkerLayerOptions(markers: _getRouteMark()),
+                            PolylineLayerOptions(
+                                polylines: [_getRoute(), _getTrack()])
+                          ],
+                        );
+                      } else if (snapshot.hasError)
+                        return Container(
+                            child: Text(snapshot.error.toString()),
+                            margin: EdgeInsets.all(10));
+                      else
+                        return Center(child: CircularProgressIndicator());
+                    }),
+                Align(
+                  child: Text(
+                      '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
+                      style: TextStyle(color: Colors.black, fontSize: 12)),
+                  alignment: Alignment.bottomLeft,
+                )
+              ])),
+          Flexible(child: charts.LineChart(_getAltitude()))
         ]));
   }
 }
