@@ -150,7 +150,7 @@ class SettingsViewState extends State<SettingsView> {
                   context: context,
                   builder: (BuildContext context) => MyDialog(
                       title: "About Fluttair",
-                      text: "I am Fluttair!",
+                      text: "Fluttair is a free and basic VFR navigation app developed by Adrien Crovato\nhttps://github.com/acrovato",
                       closeText: 'Close')))
         ]));
   }

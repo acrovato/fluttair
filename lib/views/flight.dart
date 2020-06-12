@@ -129,17 +129,20 @@ class FlightPlanViewState extends State<FlightPlanView> {
   void _addSteer(String input) {
     if (input != null) {
       try {
-        List<double> coord = input.split(',').map(double.parse).toList();
-        if (coord.length == 2)
-          setState(() => widget.flight.steerpoints.insert(
-              widget.flight.steerpoints.length - 1,
-              LatLng(coord[0], coord[1])));
-        else
-          _scaffoldKey.currentState.showSnackBar(snackBar(
-              'Format error: please enter latitude and longitude separated by a comma (eg: 1.2,3.4)'));
-      } catch (_) {
-        _scaffoldKey.currentState.showSnackBar(snackBar(
-            'Format error: please enter latitude and longitude separated by a comma (eg: 1.2,3.4)'));
+        if (widget.flight.steerpoints.length == 2) {
+          List<double> coord = input.split(',').map(double.parse).toList();
+          if (coord.length == 2 && coord[0].isFinite && coord[1].isFinite)
+            setState(() => widget.flight.steerpoints.insert(
+                widget.flight.steerpoints.length - 1,
+                LatLng(coord[0], coord[1])));
+          else
+            _scaffoldKey.currentState.showSnackBar(snackBar(
+                'Format error: please enter latitude and longitude separated by a comma (eg: 1.2,3.4)'));
+        } else
+          _scaffoldKey.currentState.showSnackBar(
+              snackBar('Please enter departure and arrival airport first'));
+      } catch (e) {
+        _scaffoldKey.currentState.showSnackBar(snackBar('Error '+e.toString()));
       }
     }
   }

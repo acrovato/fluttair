@@ -116,8 +116,8 @@ class _DataTabState extends State<_DataTab> {
                 ]))),
         Card(
           child: ListTile(
-            title:
-                Text('Timezone', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text('Ephemeris',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               children: <Widget>[
                 Row(

@@ -180,7 +180,8 @@ class NotamsProvider {
   }
 
   Future<bool> fetch(String icao) async {
-    // Query PilotWeb for NOTAMs
+    return false;
+    /*// PilotWeb is deprecated
     final Map<String, String> query = {
       'reportType': 'RAW',
       'method': 'displayByICAOs',
@@ -191,9 +192,19 @@ class NotamsProvider {
     final uri = Uri.parse(
             'https://pilotweb.nas.faa.gov/PilotWeb/notamRetrievalByICAOAction.do')
         .replace(queryParameters: query);
-    Map<String, dynamic> ntm = {};
+    Map<String, dynamic> ntm = {};*/
 
-    try {
+    /*// FAA NotamSearch
+    final Map<String, String> query = {
+      'designatorsForLocation': icao,
+      'recaptchaToken': '...'
+    };
+    final uri = Uri.parse(
+            'https://notams.aim.faa.gov/notamSearch/search')
+        .replace(queryParameters: query);
+    Map<String, dynamic> ntm = {};*/
+
+    /*try {
       //
       http.Response response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -218,6 +229,6 @@ class NotamsProvider {
     // if no connection
     on SocketException catch (_) {
       return false;
-    }
+    }*/
   }
 }

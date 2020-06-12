@@ -78,7 +78,7 @@ class _AirportsTabState extends State<_AirportsTab> {
   }
 
   @override
-  void dispose () {
+  void dispose() {
     searchController.dispose();
     super.dispose();
   }
@@ -129,7 +129,8 @@ class _AirportsTabState extends State<_AirportsTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());
@@ -166,7 +167,7 @@ class _AirspacesTabState extends State<_AirspacesTab> {
   }
 
   @override
-  void dispose () {
+  void dispose() {
     searchController.dispose();
     super.dispose();
   }
@@ -216,7 +217,8 @@ class _AirspacesTabState extends State<_AirspacesTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());
@@ -253,7 +255,7 @@ class _NavaidsTabState extends State<_NavaidsTab> {
   }
 
   @override
-  void dispose () {
+  void dispose() {
     searchController.dispose();
     super.dispose();
   }
@@ -304,7 +306,8 @@ class _NavaidsTabState extends State<_NavaidsTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());

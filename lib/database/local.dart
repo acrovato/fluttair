@@ -46,11 +46,18 @@ class DatabaseProvider {
     // copy
     ByteData data = await rootBundle.load(path1);
     List<int> bytes =
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     // write and flush the bytes written
     await File(path0).writeAsBytes(bytes, flush: true);
     // Open the database
     return await openDatabase(path0, readOnly: true);
+  }
+
+  Future<int> getAirac() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+        'Airac', where: "id = 0");
+    return maps[0]['number'];
   }
 
   Future<List<Country>> getCountries() async {

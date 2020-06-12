@@ -39,7 +39,7 @@ class HomeViewState extends State<HomeView> {
       notamsProvider.notamsFile;
       mapProvider.mapPath;
       setState(() {
-        _message = Text('Database sucessfully loaded',
+        _message = Text('Database successfully loaded',
             style: TextStyle(color: Colors.green));
       });
       Timer(const Duration(milliseconds: 500),
@@ -56,7 +56,7 @@ class HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Welcome to FluttAir!'),
+          title: Text('Welcome to Fluttair!'),
         ),
         body: Stack(children: <Widget>[
           Center(child: FlutterLogo(size: 128)),
