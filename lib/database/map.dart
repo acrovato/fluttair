@@ -80,9 +80,94 @@ class MapProvider {
           name += ' Belgium';
         }
         break;
+      case 'ed':
+        {
+          name += ' Germany';
+        }
+        break;
+      case 'ef':
+        {
+          name += ' Finland';
+        }
+        break;
       case 'eh':
         {
           name += ' Netherlands';
+        }
+        break;
+      case 'ek':
+        {
+          name += ' Denmark';
+        }
+        break;
+      case 'ep':
+        {
+          name += ' Poland';
+        }
+        break;
+      case 'es':
+        {
+          name += ' Sweden';
+        }
+        break;
+      case 'lb':
+        {
+          name += ' Bulgaria';
+        }
+        break;
+      case 'ld':
+        {
+          name += ' Croatia';
+        }
+        break;
+      case 'lg':
+        {
+          name += ' Greece';
+        }
+        break;
+      case 'lh':
+        {
+          name += ' Hungary';
+        }
+        break;
+      case 'li':
+        {
+          name += ' Italy';
+        }
+        break;
+      case 'lj':
+        {
+          name += ' Slovenia';
+        }
+        break;
+      case 'lk':
+        {
+          name += ' Czech Republic';
+        }
+        break;
+      case 'lm':
+        {
+          name += ' Malta';
+        }
+        break;
+      case 'lo':
+        {
+          name += ' Austria';
+        }
+        break;
+      case 'lr':
+        {
+          name += ' Romania';
+        }
+        break;
+      case 'ls':
+        {
+          name += ' Switzerland';
+        }
+        break;
+      case 'lz':
+        {
+          name += ' Slovakia';
         }
         break;
       default:

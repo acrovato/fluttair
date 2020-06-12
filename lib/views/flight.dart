@@ -129,7 +129,7 @@ class FlightPlanViewState extends State<FlightPlanView> {
   void _addSteer(String input) {
     if (input != null) {
       try {
-        if (widget.flight.steerpoints.length == 2) {
+        if (widget.flight.steerpoints.length >= 2) {
           List<double> coord = input.split(',').map(double.parse).toList();
           if (coord.length == 2 && coord[0].isFinite && coord[1].isFinite)
             setState(() => widget.flight.steerpoints.insert(

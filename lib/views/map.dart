@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:fluttair/model/airspace.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/plugin_api.dart';
 import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:wakelock/wakelock.dart';
@@ -10,9 +12,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/map.dart';
+import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/model/map.dart';
+import 'package:fluttair/model/country.dart';
+import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/utils/radio_dialog.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
@@ -26,12 +31,17 @@ class MapView extends StatefulWidget {
   MapViewState createState() => MapViewState();
 }
 
-// TODO check and understand how the different maps are loaded and persist in memory
+// TODO avoid using setState and use rebuild:Stream instead to prevent flutter_map to reload everything each time the map is moved
+// TODO clear and load new tiles when map is changed
 // TODO ongoing notif: init outside and prevent from closing location stream
 class MapViewState extends State<MapView> {
   // Map
   MapProvider _mapProvider = MapProvider();
   int _mapId = Preferences.getDefaultMap();
+
+  // Database
+  DatabaseProvider _dbProvider = DatabaseProvider();
+  bool _displayLayers = false;
 
   // Location
   Location _locationService = Location();
@@ -105,7 +115,9 @@ class MapViewState extends State<MapView> {
         _locationService.onLocationChanged().listen((LocationData result) {
       setState(() {
         _currentLocation = result;
-        if (_recording && _currentLocation.speed > 5) // do not record if speed is less than taxi speed (10kts)
+        if (_recording &&
+            _currentLocation.speed >
+                5) // do not record if speed is less than taxi speed (10kts)
           _flight.record(_currentLocation.latitude, _currentLocation.longitude,
               _currentLocation.altitude);
         if (_autoCentering) _centerMap();
@@ -231,6 +243,85 @@ class MapViewState extends State<MapView> {
         color: Colors.purple);
   }
 
+  Future<List<Airport>> _getAirports() async {
+    List<Airport> airports = [];
+    List<Country> countries = await DatabaseProvider().getCountries();
+    for (Country country in countries) {
+      List<Airport> cAirports = await DatabaseProvider().getAirports(country);
+      airports.addAll(cAirports);
+    }
+    return airports;
+  }
+
+  List<Marker> _getAirportMark() {
+    List<Marker> marks = [];
+    _getAirports().then((List<Airport> airports) {
+      for (Airport airport in airports) {
+        if (airport.typec == 'AD_MIL' ||
+            airport.typec == 'AF_CIVIL' ||
+            airport.typec == 'AF_MIL_CIVIL' ||
+            airport.typec == 'INTL_APT')
+          marks.add(Marker(
+              point: LatLng(airport.latitude, airport.longitude),
+              builder: (context) =>
+                  Icon(Icons.not_interested, color: Colors.indigoAccent)));
+      }
+    });
+    return marks;
+  }
+
+  Future<List<Airspace>> _getAirspaces() async {
+    List<Airspace> airspaces = [];
+    List<Country> countries = await DatabaseProvider().getCountries();
+    for (Country country in countries) {
+      List<Airspace> cAirspaces =
+          await DatabaseProvider().getAirspaces(country);
+      airspaces.addAll(cAirspaces);
+    }
+    return airspaces;
+  }
+
+  List<Polyline> _getAirspaceBound() {
+    List<Polyline> polys = [];
+    _getAirspaces().then((List<Airspace> airspaces) {
+      for (Airspace airspace in airspaces) {
+        List<String> accCat = [
+          'CTR',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'DANGER',
+          'RESTRICTED',
+          'PROHIBITED'
+        ];
+        String cat = airspace.category;
+        if (accCat.contains(cat)) {
+          int altLimit = 1500; // ft // TODO move to preferences
+          int alt = airspace.floorRef == 'STD' ? int.parse( airspace.floor) * 100 : int.parse( airspace.floor);
+          if (alt <= altLimit) {
+            List<LatLng> boundary = List(airspace.latitude.length);
+            for (int i = 0; i < boundary.length; ++i)
+              boundary[i] = LatLng(airspace.latitude[i], airspace.longitude[i]);
+            bool dashed = false;
+            Color color = Colors.indigoAccent;
+            if (cat == 'CTR' || cat == 'RMZ') dashed = true;
+            if (cat == 'DANGER' || cat == 'RESTRICTED' || cat == 'PROHIBITED')
+              color = Colors.red;
+            polys.add(Polyline(
+                points: boundary,
+                strokeWidth: 3.0,
+                isDotted: dashed,
+                color: color));
+          }
+        }
+      }
+    });
+    return polys;
+  }
+
   Widget _appBar() {
     List<PopupMenuItem<int>> _actions = List(2);
     _actions[0] = PopupMenuItem<int>(child: Text('Set map'), value: 0);
@@ -319,10 +410,15 @@ class MapViewState extends State<MapView> {
                               tms: true,
                               tileProvider: MBTilesImageProvider.fromFile(
                                   snapshot.data.file)),
+                          MarkerLayerOptions(
+                              markers: _displayLayers ? _getAirportMark() : []),
+                          PolylineLayerOptions(
+                              polylines:
+                                  _displayLayers ? _getAirspaceBound() : []),
                           MarkerLayerOptions(markers: _getRouteMark()),
                           PolylineLayerOptions(polylines: [_getRoute()]),
                           MarkerLayerOptions(markers: _getPositMark()),
-                          PolylineLayerOptions(polylines: [_getVector()])
+                          PolylineLayerOptions(polylines: [_getVector()]),
                         ],
                       );
                     } else if (snapshot.hasError)
@@ -336,37 +432,46 @@ class MapViewState extends State<MapView> {
                   padding: EdgeInsets.only(bottom: 16.0, right: 8.0, top: 8.0),
                   child: Align(
                       child: Column(children: <Widget>[
-                        FloatingActionButton(
-                            heroTag: 'layers',
-                            child: Icon(Icons.layers),
-                            onPressed: () {}),
-                        FloatingActionButton(
-                            heroTag: 'position', // filter_center_focus
-                            child: _autoCentering
-                                ? Icon(Icons.center_focus_strong)
-                                : Icon(Icons.my_location),
-                            onPressed: () {
-                              if (_locationSubscription == null)
-                                _initLocation();
-                              else {
-                                if (_currentLocation != null) {
+                        Opacity(
+                            opacity: 0.8,
+                            child: FloatingActionButton(
+                                heroTag: 'layers',
+                                child: Icon(Icons.layers),
+                                onPressed: () {
                                   setState(() {
-                                    if (_autoCentering)
-                                      _autoCentering = false;
-                                    else {
-                                      _autoCentering = true;
-                                      _centerMap();
-                                    }
+                                    _displayLayers = !_displayLayers;
                                   });
-                                }
-                              }
-                            })
+                                })),
+                        Opacity(
+                            opacity: 0.8,
+                            child: FloatingActionButton(
+                                heroTag: 'position',
+                                // filter_center_focus
+                                child: _autoCentering
+                                    ? Icon(Icons.center_focus_strong)
+                                    : Icon(Icons.my_location),
+                                onPressed: () {
+                                  if (_locationSubscription == null)
+                                    _initLocation();
+                                  else {
+                                    if (_currentLocation != null) {
+                                      setState(() {
+                                        if (_autoCentering)
+                                          _autoCentering = false;
+                                        else {
+                                          _autoCentering = true;
+                                          _centerMap();
+                                        }
+                                      });
+                                    }
+                                  }
+                                }))
                       ], mainAxisAlignment: MainAxisAlignment.spaceBetween),
                       alignment: Alignment.centerRight)),
               Align(
-                child: Text(
-                    '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
-                    style: TextStyle(color: Colors.black, fontSize: 12)),
+                child: Text('© OpenFlightMaps',
+                    //\n© OpenTileMap, OpenStreetMap contributors',
+                    style: TextStyle(color: Colors.black, fontSize: 14)),
                 alignment: Alignment.bottomLeft,
               )
             ],
