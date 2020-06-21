@@ -1,4 +1,3 @@
-import 'package:fluttair/model/airport.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
@@ -10,6 +9,7 @@ import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/model/map.dart';
+import 'package:fluttair/model/airport.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'package:fluttair/views/map.dart';
 
@@ -142,7 +142,8 @@ class FlightPlanViewState extends State<FlightPlanView> {
           _scaffoldKey.currentState.showSnackBar(
               snackBar('Please enter departure and arrival airport first'));
       } catch (e) {
-        _scaffoldKey.currentState.showSnackBar(snackBar('Error '+e.toString()));
+        _scaffoldKey.currentState
+            .showSnackBar(snackBar('Error ' + e.toString()));
       }
     }
   }
@@ -299,7 +300,7 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
           id: 'altitude',
           domainFn: (MapEntry<double, int> data, _) => data.key,
           measureFn: (MapEntry<double, int> data, _) => data.value,
-          data: alt) // TODO custom color, etc.
+          data: alt)
     ];
   }
 
@@ -365,7 +366,9 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
                         return FlutterMap(
                           mapController: _mapController,
                           options: MapOptions(
-                            center: _homeBase,
+                            center: widget.flight.steerpoints.isEmpty
+                                ? _homeBase
+                                : widget.flight.steerpoints[0],
                             minZoom: 6.0,
                             maxZoom: 12.0,
                             zoom: 8.0,
@@ -388,13 +391,27 @@ class FlightArchiveViewState extends State<FlightArchiveView> {
                         return Center(child: CircularProgressIndicator());
                     }),
                 Align(
-                  child: Text(
-                      '© OpenFlightMap\n© OpenTileMap, OpenStreetMap contributors',
-                      style: TextStyle(color: Colors.black, fontSize: 12)),
+                  child: Text('© OpenFlightMap',
+                      //\n© OpenTileMap, OpenStreetMap contributors',
+                      style: TextStyle(color: Colors.black, fontSize: 14)),
                   alignment: Alignment.bottomLeft,
                 )
               ])),
-          Flexible(child: charts.LineChart(_getAltitude()))
+          Flexible(
+              child: charts.LineChart(_getAltitude(),
+                  domainAxis: charts.NumericAxisSpec(
+                      renderSpec: charts.SmallTickRendererSpec(
+                          labelStyle: charts.TextStyleSpec(
+                              color: charts.ColorUtil.fromDartColor(
+                                  Theme.of(context).textTheme.title.color)),
+                          lineStyle: charts.LineStyleSpec(
+                              color: charts.ColorUtil.fromDartColor(
+                                  Theme.of(context).textTheme.title.color)))),
+                  primaryMeasureAxis: charts.NumericAxisSpec(
+                      renderSpec: charts.GridlineRendererSpec(
+                          labelStyle: charts.TextStyleSpec(
+                              color: charts.ColorUtil.fromDartColor(Theme.of(context).textTheme.title.color)),
+                          lineStyle: charts.LineStyleSpec(color: charts.ColorUtil.fromDartColor(Theme.of(context).textTheme.title.color))))))
         ]));
   }
 }

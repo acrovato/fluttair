@@ -28,6 +28,8 @@ class SettingsViewState extends State<SettingsView> {
   var _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Fixed list of options
+  //static List<String> _altitudeLimit = _altitudes();
+  final List<String> _altitudeLimit = [for (int i = 10; i <= 95; i += 5) '0${i}', '100'];
   final List<int> _gpsRefreshRate = [1, 5, 10, 20, 30, 60];
   final List<String> _unitsSpeed = ['kts', 'km/h'];
   final List<String> _unitsAlt = ['ft', 'm'];
@@ -106,6 +108,15 @@ class SettingsViewState extends State<SettingsView> {
                             Preferences.setDefaultMap(value),
                       ))),
           _tile(
+              'Display airspace layers below FL',
+              DropdownList(
+                  initial:
+                  _altitudeLimit.indexOf(Preferences.getAltitudeLimit()),
+                  data: _getFuture(_altitudeLimit),
+                  onChanged: (value) =>
+                      Preferences.setAltitudeLimit(_altitudeLimit[value])),
+              null),
+          _tile(
               'Position refresh rate (second)',
               DropdownList(
                   initial:
@@ -150,7 +161,8 @@ class SettingsViewState extends State<SettingsView> {
                   context: context,
                   builder: (BuildContext context) => MyDialog(
                       title: "About Fluttair",
-                      text: "Fluttair is a free and basic VFR navigation app developed by Adrien Crovato\nhttps://github.com/acrovato",
+                      text:
+                          "Fluttair is a free and basic VFR navigation app developed by Adrien Crovato\nhttps://github.com/acrovato",
                       closeText: 'Close')))
         ]));
   }

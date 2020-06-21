@@ -6,6 +6,8 @@ class Preferences {
   static final String _darkMode = 'dark_mode'; // set theme to dark
   static final String _defaultMap =
       'default_map'; // default map displayed in Map view
+  static final String _altitudeLimit =
+      'alt_limit'; // flight level above which layers are not displayed on map
   static final String _gpsRefreshRate = 'gps_refresh'; // gps refresh rate
   static final String _speedUnit =
       'map_units_speed'; // units for speed in Map view
@@ -39,6 +41,14 @@ class Preferences {
 
   static void setDefaultMap(int value) {
     _prefs.setInt(_defaultMap, value);
+  }
+
+  static String getAltitudeLimit() {
+    return _prefs.getString(_altitudeLimit) ?? '100';
+  }
+
+  static void setAltitudeLimit(String value) {
+    _prefs.setString(_altitudeLimit, value);
   }
 
   static int getGpsRefreshRate() {

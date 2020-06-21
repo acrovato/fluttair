@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:fluttair/model/airspace.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,6 +9,7 @@ import 'package:location/location.dart';
 import 'package:latlong/latlong.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/map.dart';
@@ -18,6 +19,8 @@ import 'package:fluttair/model/flight.dart';
 import 'package:fluttair/model/map.dart';
 import 'package:fluttair/model/country.dart';
 import 'package:fluttair/model/airport.dart';
+import 'package:fluttair/model/navaid.dart';
+import 'package:fluttair/model/airspace.dart';
 import 'package:fluttair/utils/radio_dialog.dart';
 import 'package:fluttair/utils/snackbar.dart';
 import 'sidebar.dart';
@@ -263,8 +266,39 @@ class MapViewState extends State<MapView> {
             airport.typec == 'INTL_APT')
           marks.add(Marker(
               point: LatLng(airport.latitude, airport.longitude),
-              builder: (context) =>
-                  Icon(Icons.not_interested, color: Colors.indigoAccent)));
+              builder: (context) => SvgPicture.asset('assets/svg/ad.svg',
+                  allowDrawingOutsideViewBox: false)));
+      }
+    });
+    return marks;
+  }
+
+  Future<List<Navaid>> _getNavaids() async {
+    List<Navaid> navaids = [];
+    List<Country> countries = await DatabaseProvider().getCountries();
+    for (Country country in countries) {
+      List<Navaid> cNavaids = await DatabaseProvider().getNavaids(country);
+      navaids.addAll(cNavaids);
+    }
+    return navaids;
+  }
+
+  List<Marker> _getNavaidMark() {
+    List<Marker> marks = [];
+    _getNavaids().then((List<Navaid> navaids) {
+      for (Navaid navaid in navaids) {
+        Widget icon;
+        try {
+          icon = SvgPicture.asset(
+              'assets/svg/' + navaid.type.toLowerCase() + '.svg',
+              allowDrawingOutsideViewBox: false,
+              color: Colors.blue[900]);
+        } catch (_) {
+          icon = Icon(Icons.crop_square, color: Colors.blue[900]);
+        }
+        marks.add(Marker(
+            point: LatLng(navaid.latitude, navaid.longitude),
+            builder: (context) => icon));
       }
     });
     return marks;
@@ -281,12 +315,14 @@ class MapViewState extends State<MapView> {
     return airspaces;
   }
 
-  List<Polyline> _getAirspaceBound() {
-    List<Polyline> polys = [];
+  List<Polygon> _getAirspaceBound() {
+    List<Polygon> polys = [];
     _getAirspaces().then((List<Airspace> airspaces) {
       for (Airspace airspace in airspaces) {
         List<String> accCat = [
           'CTR',
+          'RMZ',
+          'A',
           'B',
           'C',
           'D',
@@ -295,25 +331,34 @@ class MapViewState extends State<MapView> {
           'G',
           'DANGER',
           'RESTRICTED',
-          'PROHIBITED'
+          'PROHIBITED',
+          'GLIDING'
         ];
         String cat = airspace.category;
         if (accCat.contains(cat)) {
-          int altLimit = 1500; // ft // TODO move to preferences
-          int alt = airspace.floorRef == 'STD' ? int.parse( airspace.floor) * 100 : int.parse( airspace.floor);
+          int altLimit = int.parse(Preferences.getAltitudeLimit()) * 100;
+          int alt = airspace.floorRef == 'STD'
+              ? int.parse(airspace.floor) * 100
+              : int.parse(airspace.floor);
           if (alt <= altLimit) {
             List<LatLng> boundary = List(airspace.latitude.length);
             for (int i = 0; i < boundary.length; ++i)
               boundary[i] = LatLng(airspace.latitude[i], airspace.longitude[i]);
             bool dashed = false;
-            Color color = Colors.indigoAccent;
-            if (cat == 'CTR' || cat == 'RMZ') dashed = true;
+            Color color = Colors.transparent;
+            Color bColor = Colors.blue[900];
+            if (cat == 'CTR' || cat == 'RMZ' || cat == 'GLIDING') {
+              dashed = true;
+              color = Colors.red[50].withOpacity(0.4);
+            }
             if (cat == 'DANGER' || cat == 'RESTRICTED' || cat == 'PROHIBITED')
-              color = Colors.red;
-            polys.add(Polyline(
+              bColor = Colors.red[900];
+            if (cat == 'DANGER') dashed = true;
+            polys.add(Polygon(
                 points: boundary,
-                strokeWidth: 3.0,
+                borderStrokeWidth: 3.0,
                 isDotted: dashed,
+                borderColor: bColor,
                 color: color));
           }
         }
@@ -402,7 +447,7 @@ class MapViewState extends State<MapView> {
                         options: MapOptions(
                           center: _homeBase,
                           minZoom: 6.0,
-                          maxZoom: 12.0,
+                          maxZoom: 11.0,
                           zoom: 8.0,
                         ),
                         layers: [
@@ -412,9 +457,12 @@ class MapViewState extends State<MapView> {
                                   snapshot.data.file)),
                           MarkerLayerOptions(
                               markers: _displayLayers ? _getAirportMark() : []),
-                          PolylineLayerOptions(
-                              polylines:
-                                  _displayLayers ? _getAirspaceBound() : []),
+                          MarkerLayerOptions(
+                              markers: _displayLayers ? _getNavaidMark() : []),
+                          PolygonLayerOptions(
+                              polygons:
+                                  _displayLayers ? _getAirspaceBound() : [],
+                              polygonCulling: true),
                           MarkerLayerOptions(markers: _getRouteMark()),
                           PolylineLayerOptions(polylines: [_getRoute()]),
                           MarkerLayerOptions(markers: _getPositMark()),
@@ -441,7 +489,8 @@ class MapViewState extends State<MapView> {
                                   setState(() {
                                     _displayLayers = !_displayLayers;
                                   });
-                                })),
+                                })
+                        ),
                         Opacity(
                             opacity: 0.8,
                             child: FloatingActionButton(
