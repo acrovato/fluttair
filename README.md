@@ -1,7 +1,7 @@
 # Fluttair
 A flutter application for VFR flight planning and navigation.
 
-<img src="demo/map2.png" width="100"> <img src="demo/map1.png" width="100"> <img src="demo/archived.png" width="100"> <img src="demo/db3.png" width="100">
+<img src="demo/map2.png" width="200"> <img src="demo/map1.png" width="200"> <img src="demo/archived.png" width="200"> <img src="demo/db3.png" width="200">
 
 ## Overview
 Fluttair is destined to VFR pilots who seek a minimalist and free navigation moving map application.
