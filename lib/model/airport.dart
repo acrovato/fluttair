@@ -6,6 +6,7 @@ class Airport {
   final int id; // database key
   final String icao; // ICAO code
   final String name; // airport name
+  final String typec; // airport type code (AF_CIVIL, ...)
   final String type; // airport type (civil, ...)
   final String country; // country where the airport is
   final double latitude; // geolocation
@@ -21,6 +22,7 @@ class Airport {
       {this.id,
       this.icao,
       this.name,
+      this.typec,
       this.type,
       this.country,
       this.latitude,
@@ -106,6 +108,7 @@ class Airport {
         icao: map['icao'] ?? '----',
         name: map['name'],
         country: map['country'],
+        typec: map['type'],
         type: type,
         latitude: map['latitude'],
         longitude: map['longitude'],

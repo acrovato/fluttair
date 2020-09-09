@@ -46,11 +46,18 @@ class DatabaseProvider {
     // copy
     ByteData data = await rootBundle.load(path1);
     List<int> bytes =
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     // write and flush the bytes written
     await File(path0).writeAsBytes(bytes, flush: true);
     // Open the database
     return await openDatabase(path0, readOnly: true);
+  }
+
+  Future<int> getAirac() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+        'Airac', where: "id = 0");
+    return maps[0]['number'];
   }
 
   Future<List<Country>> getCountries() async {
@@ -68,6 +75,16 @@ class DatabaseProvider {
     return List.generate(maps.length, (i) {
       return Airport.fromMap(maps[i]);
     });
+  }
+
+  Future<Airport> getAirport(String icao) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('Airports',
+        where: "icao = ?", whereArgs: [icao]);
+    if (maps.length == 1)
+      return Airport.fromMap(maps[0]);
+    else
+      return null;
   }
 
   Future<List<Runway>> getRunways(Airport airport) async {

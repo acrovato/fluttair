@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:fluttair/database/preferences.dart';
 import 'package:fluttair/database/local.dart';
+import 'package:fluttair/database/flight.dart';
 import 'package:fluttair/database/internet.dart';
+import 'package:fluttair/database/map.dart';
 
 /// Splash screen
 class HomeView extends StatefulWidget {
@@ -18,20 +21,25 @@ class HomeViewState extends State<HomeView> {
   @override
   void initState() {
     _message = Text('Loading data...');
-    checkData();
+    _checkData();
     super.initState();
   }
 
-  checkData() {
+  void _checkData() {
     DatabaseProvider dbProvider = DatabaseProvider();
+    FlightProvider fltProvider = FlightProvider();
     WeatherProvider weatherProvider = WeatherProvider();
     NotamsProvider notamsProvider = NotamsProvider();
+    MapProvider mapProvider = MapProvider();
     try {
+      Preferences.prefs;
       dbProvider.database;
+      fltProvider.flightPath;
       weatherProvider.weatherFile;
       notamsProvider.notamsFile;
+      mapProvider.mapPath;
       setState(() {
-        _message = Text('Database sucessfully loaded',
+        _message = Text('Database successfully loaded',
             style: TextStyle(color: Colors.green));
       });
       Timer(const Duration(milliseconds: 500),
@@ -39,7 +47,7 @@ class HomeViewState extends State<HomeView> {
     } on FileSystemException catch (e) {
       setState(() {
         _message = Text('Error while loading database\n' + e.toString(),
-            style: TextStyle(color: Colors.green));
+            style: TextStyle(color: Colors.red));
       });
     }
   }
@@ -48,7 +56,7 @@ class HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Welcome to FluttAir!'),
+          title: Text('Welcome to Fluttair!'),
         ),
         body: Stack(children: <Widget>[
           Center(child: FlutterLogo(size: 128)),

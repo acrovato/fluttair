@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'package:fluttair/custom_icons.dart' show CustomIcons;
 
+import 'package:fluttair/utils/snackbar.dart';
+
 import 'package:fluttair/database/local.dart';
 import 'package:fluttair/database/internet.dart';
 import 'package:fluttair/model/airport.dart';
@@ -114,8 +116,8 @@ class _DataTabState extends State<_DataTab> {
                 ]))),
         Card(
           child: ListTile(
-            title:
-                Text('Timezone', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text('Ephemeris',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               children: <Widget>[
                 Row(
@@ -294,10 +296,7 @@ class _WxTabState extends State<_WxTab> {
             statusColor = Colors.green;
           else {
             statusColor = Colors.red;
-            final snackBar = SnackBar(
-              content: Text('Network error'),
-            );
-            Scaffold.of(context).showSnackBar(snackBar);
+            Scaffold.of(context).showSnackBar(snackBar('Network error'));
           }
           setState(() {});
           return null;
@@ -366,10 +365,7 @@ class _NotamTabState extends State<_NotamTab> {
             statusColor = Colors.green;
           else {
             statusColor = Colors.red;
-            final snackBar = SnackBar(
-              content: Text('Network error'),
-            );
-            Scaffold.of(context).showSnackBar(snackBar);
+            Scaffold.of(context).showSnackBar(snackBar('Network error'));
           }
           setState(() {});
           return null;

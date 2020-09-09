@@ -12,8 +12,8 @@ class Weather {
       {this.metar = '',
       this.taf = '',
       this.flightRules = '',
-      this.mtFetchTime = 'No fetched data',
-      this.tfFetchTime = 'No fetched data'});
+      this.mtFetchTime = 'No data fetched',
+      this.tfFetchTime = 'No data fetched'});
 
   factory Weather.fromMap(Map<String, dynamic> map) {
     //TODO add linebreaks on keywords?

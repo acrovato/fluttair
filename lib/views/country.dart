@@ -77,6 +77,12 @@ class _AirportsTabState extends State<_AirportsTab> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
       return airportTile(context, data, i);
@@ -109,13 +115,13 @@ class _AirportsTabState extends State<_AirportsTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'airports'),
+      SearchBar(controller: searchController, text: 'airports'),
       Expanded(
           child: FutureBuilder(
               future: airports,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {
@@ -123,7 +129,8 @@ class _AirportsTabState extends State<_AirportsTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());
@@ -159,7 +166,12 @@ class _AirspacesTabState extends State<_AirspacesTab> {
     super.initState();
   }
 
-  // TODO: consider to query db to return only the needed list (less code, complexity handle by db, faster?)
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
       return airspaceTile(context, data, i);
@@ -191,13 +203,13 @@ class _AirspacesTabState extends State<_AirspacesTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'airspaces'),
+      SearchBar(controller: searchController, text: 'airspaces'),
       Expanded(
           child: FutureBuilder(
               future: airspaces,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {
@@ -205,7 +217,8 @@ class _AirspacesTabState extends State<_AirspacesTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());
@@ -241,6 +254,12 @@ class _NavaidsTabState extends State<_NavaidsTab> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
   Widget searchResults(BuildContext context, List data, int i, String filter) {
     if (filter == null || filter.isEmpty)
       return navaidTile(context, data, i);
@@ -273,13 +292,13 @@ class _NavaidsTabState extends State<_NavaidsTab> {
   @override
   Widget build(BuildContext context) {
     return Column(children: <Widget>[
-      searchBar(searchController, 'navaids'),
+      SearchBar(controller: searchController, text: 'navaids'),
       Expanded(
           child: FutureBuilder(
               future: navaids,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
                 if (snapshot.hasData) {
-                  return new ListView.builder(
+                  return ListView.builder(
                       shrinkWrap: true,
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, i) {
@@ -287,7 +306,8 @@ class _NavaidsTabState extends State<_NavaidsTab> {
                       });
                 } else if (snapshot.hasError) {
                   return Container(
-                      child: Text(snapshot.error.toString()),
+                      child: Text(snapshot.error.toString(),
+                          style: TextStyle(color: Colors.red)),
                       margin: EdgeInsets.all(10));
                 } else {
                   return Center(child: CircularProgressIndicator());
